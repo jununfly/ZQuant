@@ -223,5 +223,24 @@ def main(page: ft.Page, base_url: str = "http://127.0.0.1:8000") -> None:
     _show(0)
 
 
+def run(web: bool = False, port: int = 8555, host: str = "127.0.0.1") -> None:
+    """启动 ZQuant Flet 客户端。
+
+    Args:
+        web: True 以 Web 模式运行（浏览器访问，无需打包）；False 桌面窗口。
+        port: Web 模式端口。
+        host: Web 模式监听地址。
+    """
+    view = ft.AppView.FLET_APP_WEB if web else ft.AppView.FLET_APP
+    ft.run(main, view=view, port=port, host=host)
+
+
 if __name__ == "__main__":
-    ft.app(target=main)
+    import argparse
+
+    parser = argparse.ArgumentParser(description="ZQuant Flet 客户端")
+    parser.add_argument("--web", action="store_true", help="以 Web 模式运行")
+    parser.add_argument("--port", type=int, default=8555, help="Web 模式端口")
+    parser.add_argument("--host", default="127.0.0.1", help="Web 模式监听地址")
+    args = parser.parse_args()
+    run(web=args.web, port=args.port, host=args.host)

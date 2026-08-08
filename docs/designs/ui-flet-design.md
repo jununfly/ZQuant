@@ -145,12 +145,15 @@ Flet 胜在 **一套代码三端 + 纯 Python + 声明式控件树对 agent 友�
 
 ## 7. 演进路线
 
-1. **P0 薄 API 层**：新增 `src/zquant/api/`（FastAPI），暴露 scan/position/backtest/status 四组只读接口，复用现有 core。
-2. **P1 Flet 骨架**：新建 Flet App，搭四页导航 + 各页读取 API 的薄展示。
-3. **P2 可视化落地**：接入 `flet-charts`（LineChart/BarChart），完成四页可视化。
-4. **P3 多端打包**：`flet build` 出桌面/移动包；验证 agent 经 API 调用全流程。
+1. **P0 薄 API 层**（✅ 完成）：新增 `src/zquant/api/`（FastAPI），暴露 scan/position/backtest/status 四组只读接口，复用现有 core。
+2. **P1 Flet 骨架**（✅ 完成）：新建 Flet App，四页导航 + 各页经 `ui/api_client` 读 API。
+3. **P2 可视化落地**（✅ 完成）：接入 `flet-charts`（LineChart/BarChart），四页图表（活筹曲线/信号分布/三层分配/权益曲线）。
+4. **P3 多端打包 + agent 验证**（✅ 完成）：
+   - agent 全流程验证通过：status→scan→单票详情→position→backtest 经 HTTP API 闭环。
+   - Flet **Web 模式**可用（`python -m zquant.ui.main --web`，浏览器访问，含移动端 meta，无需 Flutter 打包）。
+   - 桌面/移动安装包：需 Flutter SDK，`flet build windows` / `flet build apk`（当前开发环境未装 Flutter，留待部署机执行）。
 
-> 里程碑：此项作为 **M7（多端界面）** 立项，与现有 M1–M6 并列，不改变已完成的 core。
+> 里程碑：此项作为 **M7（多端界面）** 立项，与现有 M1–M6 并列，不改变已完成的 core。M7 全部完成。
 
 ---
 

@@ -31,6 +31,14 @@ def fill_active_cap():
 
 
 @app.command()
+def dashboard():
+    """打开完整 TUI 仪表盘（状态/扫描/仓位/回测）。"""
+    from zquant.tui.dashboard import run
+
+    run()
+
+
+@app.command()
 def status():
     """查看当前系统状态：数据覆盖范围、活筹趋势、最近信号。"""
 

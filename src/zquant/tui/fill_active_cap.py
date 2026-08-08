@@ -6,7 +6,6 @@
 3. 提交后自动写入 SQLite + 刷新表格
 """
 
-from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.containers import Container
@@ -32,7 +31,7 @@ class ActiveCapitalFillApp(App):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Container(
-            Static("输入日期和活跃市值数��", id="title"),
+            Static("输入日期和活跃市值数值", id="title"),
             Input(placeholder="YYYY-MM-DD", id="date-input"),
             Input(placeholder="活筹值", id="value-input"),
             Static("", id="error-message"),

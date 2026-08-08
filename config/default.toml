@@ -1,0 +1,74 @@
+# ============================================================
+# zquant 默认参数配置
+# 所有阈值均可在此文件中调整，无需改代码
+# ============================================================
+
+[active_capital]
+# 活跃市值（活筹指数）择时阈值
+# 数据来源：指南针软件，每日人工回填
+bull_threshold = 4.0       # 单日涨幅 >= 4% → 多头波段
+bear_threshold = -2.3      # 单日跌幅 <= -2.3% → 空头波段
+
+[signals.b1]
+# B1 超跌反弹买点
+j_oversold = -10           # KDJ J值超卖阈值（极端负值）
+min_consecutive_days = 2   # 至少连续N日处于超卖区
+
+[signals.b2]
+# B2 突破买点
+ma_short = 5               # 短期均线（5日线）
+ma_mid = 20                # 中期均线（20日线）
+volume_ratio = 1.5         # 放量突破：成交量 >= N倍前5日均量
+confirmation_days = 1      # 突破确认：站稳N日
+
+[signals.b3]
+# B3 加速/回踩买点
+ma_mid = 20                # 回踩参考均线（20日线）
+needle_shadow_ratio = 0.5  # 单针下20：下影线占实体比例
+
+[signals.b3.brick]
+# 砖型底部量化
+min_days = 5               # 至少连续 N 日
+max_daily_range_pct = 1.5  # 单日振幅不超过 N%
+volume_shrink_ratio = 0.5  # 量能萎缩至前10日均量的 N 倍以下
+
+[signals.s1]
+# S1 冲顶预警
+j_overbought = 100         # KDJ J值超买阈值
+divergence_bars = 5        # 钝化检查：连续N根K线
+
+[signals.s2]
+# S2 破位预警
+ma_mid = 20                # 破位参考均线
+break_days = 3             # 连续跌破N日确认有效破位
+
+[signals.s3]
+# S3 趋势终结
+divergence_period = 20     # 顶背离检查周期
+
+[signals.didi]
+# 滴滴短线风控
+check_time = "09:33"       # 次日早盘检查时刻
+min_gain_pct = 2.0         # 最低涨幅阈值
+
+[position]
+# 仓位框架
+main_line_max = 0.70       # 主线 50%-70%
+sub_line_max = 0.20        # 支线 10%-20%
+defense_max = 0.20         # 答应 10%-20%
+
+# 配合活筹动态调整
+bull_total_max = 0.80      # 多头期最高总仓位
+neutral_total_max = 0.50   # 震荡期最高总仓位
+bear_total_max = 0.20      # 空头期最高总仓位
+
+[data]
+# 数据源配置
+tdx_base_path = "C:\\zd_zsone\\T0002"  # 通达信数据目录（默认）
+tushare_token = ""                      # Tushare token（可选）
+
+# KDJ 参数
+[kdj]
+k_period = 9
+k_smooth = 3
+d_smooth = 3

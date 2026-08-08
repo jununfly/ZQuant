@@ -1,0 +1,488 @@
+{
+  "title": "ZQuant",
+  "description": "zettaranc 量化交易系统 — Python CLI 复现",
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "label": "ZQuant",
+      "status": "completed",
+      "mode": "explore",
+      "parent": null,
+      "children": [
+        "1-7",
+        "1-8",
+        "1-9",
+        "1-10",
+        "1-11",
+        "1-12",
+        "1-13"
+      ],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-7": {
+      "id": "1-7",
+      "label": "M1: 活筹指数数据链打通",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-7-7",
+        "1-7-8",
+        "1-7-9",
+        "1-7-10",
+        "1-7-11",
+        "1-7-12"
+      ],
+      "decisions": [
+        {
+          "q": "产物形态?",
+          "answer": "Python 库 + CLI (D)",
+          "note": "M1 快速原型"
+        },
+        {
+          "q": "数据源?",
+          "answer": "通达信本地 .day 默认 + Tushare 备选",
+          "note": "安装路径 C:/new_tdx"
+        },
+        {
+          "q": "活跃市值数据来源?",
+          "answer": "指南针软件每日人工回填 → SQLite → textual TUI",
+          "note": ""
+        },
+        {
+          "q": "参数策略?",
+          "answer": "全走 TOML 配置文件 不硬编码",
+          "note": "config/default.toml"
+        },
+        {
+          "q": "M1 测试策略?",
+          "answer": "快速原型不上 TDD M2 开始",
+          "note": ""
+        }
+      ],
+      "notes": "M1全部子任务完成"
+    },
+    "1-8": {
+      "id": "1-8",
+      "label": "M2: B系列买点信号",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-8-1",
+        "1-8-2",
+        "1-8-3",
+        "1-8-4",
+        "1-8-5",
+        "1-8-6"
+      ],
+      "decisions": [
+        {
+          "q": "B3 量化定义?",
+          "answer": "前提:上升趋势(MA5>MA20) B3a单针下20:下影线>=实体50% B3b砖型底部:连续>=5日振幅<=1.5%量能<=前10日均量50%",
+          "note": "needle_shadow_ratio=0.5 brick params"
+        },
+        {
+          "q": "B2 量化定义?",
+          "answer": "5日均线上穿20日均线(金叉) + 当日量>=前5日均量1.5倍 + 收盘站上20日线 + 次日确认仍在20日线上",
+          "note": "volume_ratio=1.5 confirmation_days=1"
+        },
+        {
+          "q": "scan 命令形态?",
+          "answer": "zquant scan 全市场 zquant scan --days N 近N天 zquant scan code 单只详细",
+          "note": ""
+        },
+        {
+          "q": "选股方式?",
+          "answer": "全市场自动扫描 遍历TDX所有.day文件 不维护股票池",
+          "note": "不复用TDX .blk临时分类"
+        },
+        {
+          "q": "B1 量化定义?",
+          "answer": "KDJ J值<=-10连续>=2日 触发: J值拐头向上(当日J>前日J) 即超卖区企稳反转第一根",
+          "note": "j_oversold=-10 min_consecutive_days=2"
+        }
+      ],
+      "notes": "M2全部子任务完成"
+    },
+    "1-9": {
+      "id": "1-9",
+      "label": "M3: S系列卖点+滴滴风控",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-9-1",
+        "1-9-2",
+        "1-9-3",
+        "1-9-4"
+      ],
+      "decisions": [
+        {
+          "q": "滴滴实现方式?",
+          "answer": "T+1日收盘近似 B信号次日收盘涨幅<2%或跌破买入价(前日收盘)",
+          "note": "日线无分钟线 实盘需人工盘口确认"
+        },
+        {
+          "q": "S2 M头双顶方案?",
+          "answer": "scipy.signal.find_peaks极值法 峰高相似度>=97% 跌破颈线确认",
+          "note": "来自GitHub最佳实践"
+        },
+        {
+          "q": "S1 量化定义?",
+          "answer": "J>=j_overbought连续>=divergence_bars日(钝化) + 当日量比>1但涨幅<1%(放量滞涨)",
+          "note": "j_overbought=100 divergence_bars=5"
+        },
+        {
+          "q": "S3 量化定义?",
+          "answer": "顶背离(divergence_period内价格新高但J未新高) + 均线拐头(MA5下穿MA20或MA20连续下降)",
+          "note": "divergence_period=20"
+        }
+      ],
+      "notes": "M3全部子任务完成"
+    },
+    "1-10": {
+      "id": "1-10",
+      "label": "M4: 仓位量化框架",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "引擎定位?",
+          "answer": "两者都要 纯信号映射(compute_target_plan) + 实际持仓调仓(compute_adjustment)",
+          "note": "用户选择"
+        },
+        {
+          "q": "层内个股分配?",
+          "answer": "手动/等权 框架只给各层总上限 内部按用户持仓等权分配",
+          "note": "用户选择"
+        },
+        {
+          "q": "三层如何钳制?",
+          "answer": "各层目标占比 = 总仓位上限 × 层share(主线0.6支线0.2答应0.2) 钳制到各自[min,max]区间 相对总仓位",
+          "note": "主线50-70% 支线10-20% 答应10-20%"
+        },
+        {
+          "q": "交付形态?",
+          "answer": "position引擎模块 + zquant position CLI命令 传 --assets/--main/--sub/--defense",
+          "note": "用户选择 未走M2式TDD以外的额外验证 但补了pytest单测+端到端脚本"
+        }
+      ],
+      "notes": "M4全部子任务完成 14个pytest用例+端到端验证通过 盘态→总仓→三层→调仓链路打通"
+    },
+    "1-11": {
+      "id": "1-11",
+      "label": "M5: 回测引擎",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "资金模型?",
+          "answer": "两者都要 单票固定仓位(backtest_symbol) + 组合集成M4活筹择时(backtest_portfolio)",
+          "note": "用户选择"
+        },
+        {
+          "q": "执行时点?",
+          "answer": "信号日收盘价成交 无未来函数",
+          "note": "用户选择"
+        },
+        {
+          "q": "S卖出映射?",
+          "answer": "逐级减仓 S1减半(50%) S2减至25% S3清仓 DD清仓",
+          "note": "用户选择"
+        },
+        {
+          "q": "输出指标?",
+          "answer": "标准绩效集 + 交易流水/权益曲线 总收益/年化/胜率/盈亏比/最大回撤/夏普",
+          "note": "用户选择"
+        }
+      ],
+      "notes": "M5全部子任务完成 13个pytest用例+端到端验证通过 单票/组合双模式 真实TDX数据验证"
+    },
+    "1-12": {
+      "id": "1-12",
+      "label": "M6: TUI完整面板",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "面板结构?",
+          "answer": "单一textual App + TabbedContent四页 状态/扫描/仓位/回测",
+          "note": "用户选择"
+        },
+        {
+          "q": "扫描展示?",
+          "answer": "可筛选扫描表 DataTable + Select按信号类型筛选",
+          "note": "用户选择"
+        },
+        {
+          "q": "实时性?",
+          "answer": "手动刷新(R键/按钮) + 进页自动刷新一次",
+          "note": "用户选择"
+        },
+        {
+          "q": "关键坑?",
+          "answer": "Select挂载时触发Changed导致全市场扫描 需_scan_done守卫",
+          "note": "31s→0.4s"
+        }
+      ],
+      "notes": "M6全部子任务完成 6个pytest用例+端到端验证通过 dashboard CLI命令"
+    },
+    "1-7-7": {
+      "id": "1-7-7",
+      "label": "TDX .day 解析器验证",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [
+        {
+          "q": "TDX .day 格式?",
+          "answer": "<IIIIIfII 32字节: date/open/high/low/close(uint32 ÷100), amount(float), volume(uint32), reserved(uint32)",
+          "note": "原代码 <IffffII 28字节 格式错误 价格应为uint32非float"
+        },
+        {
+          "q": "TDX 路径验证?",
+          "answer": "C:/new_tdx/vipdoc/{sh,sz}/lday/ 确认可用 上证指数sh000001 个股600000 深证000001均正常",
+          "note": "数据覆盖2021-08至今"
+        }
+      ],
+      "notes": "格式修复为 <IIIIIfII 已验证上证指数+个股"
+    },
+    "1-7-8": {
+      "id": "1-7-8",
+      "label": "SQLite 建表+CRUD",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-7-9": {
+      "id": "1-7-9",
+      "label": "TUI 活筹回填面板",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-7-10": {
+      "id": "1-7-10",
+      "label": "活筹信号计算+多空判定",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [
+        {
+          "q": "指数代码与个股代码冲突如何路由?",
+          "answer": "get_index_daily 增加可选 market 参数 默认按指数代码规则自动判断(上证指数000001→sh 深证成指399001→sz) get_daily_kline 保持现有个股路由逻辑",
+          "note": "用户同意"
+        }
+      ],
+      "notes": "compute_active_capital_signal + classify_regime 已实现并验证"
+    },
+    "1-7-11": {
+      "id": "1-7-11",
+      "label": "CLI status 命令",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [
+        {
+          "q": "status 命令输出格式?",
+          "answer": "数据源状态 + 活筹指数最新值/涨跌幅/盘态 + 近5日趋势表",
+          "note": "用户同意"
+        },
+        {
+          "q": "信号持久化策略?",
+          "answer": "不持久化 change_pct/regime 实时从 raw value 计算 value 是唯一真相源",
+          "note": "用户同意"
+        }
+      ],
+      "notes": "已实现 status 命令 实时计算信号不持久化"
+    },
+    "1-7-12": {
+      "id": "1-7-12",
+      "label": "M1 端到端验证",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "6步全部通过 依赖/配置/TDX/DB/信号/CLI"
+    },
+    "1-8-1": {
+      "id": "1-8-1",
+      "label": "MA+量比指标计算",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-2": {
+      "id": "1-8-2",
+      "label": "KDJ 指标计算",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-3": {
+      "id": "1-8-3",
+      "label": "B1/B2/B3 信号检测",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-4": {
+      "id": "1-8-4",
+      "label": "scan CLI 命令+结果输出",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-5": {
+      "id": "1-8-5",
+      "label": "M2 端到端验证",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-6": {
+      "id": "1-8-6",
+      "label": "TDX 全市场股票枚举",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": "全市场5223只扫描0错误 单只详细+信号存储验证通过"
+    },
+    "1-9-1": {
+      "id": "1-9-1",
+      "label": "S1/S2/S3 卖点信号检测",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-9-2": {
+      "id": "1-9-2",
+      "label": "滴滴风控信号",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-9-3": {
+      "id": "1-9-3",
+      "label": "scan CLI 集成S信号",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-9-4": {
+      "id": "1-9-4",
+      "label": "M3 端到端验证",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": "8步全部通过 8种信号类型(B1/B2/B3a/B3b/S1/S2/S3/DD)全检出"
+    },
+    "1-13": {
+      "id": "1-13",
+      "label": "M7: 多端界面（Flet）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-13-1",
+        "1-13-2",
+        "1-13-3",
+        "1-13-4"
+      ],
+      "decisions": [],
+      "notes": "Flet多端前端 + FastAPI API层; agent验证通过; web模式可用; 桌面/移动打包需Flutter SDK(部署机执行)"
+    },
+    "1-13-1": {
+      "id": "1-13-1",
+      "label": "P0: 薄FastAPI API层",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-13",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-13-2": {
+      "id": "1-13-2",
+      "label": "P1: Flet骨架(四页导航)",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-13",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-13-3": {
+      "id": "1-13-3",
+      "label": "P2: 可视化落地(flet-charts)",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-13",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-13-4": {
+      "id": "1-13-4",
+      "label": "P3: 多端打包+agent验证",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-13",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    }
+  },
+  "metadata": {
+    "created": "2026-08-08 18:44:43",
+    "updated": "2026-08-08 22:47:44",
+    "md_file": "D:\\workspace\\github\\jununfly\\ZQuant\\docs\\plans\\roadmap.md"
+  }
+}

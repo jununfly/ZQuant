@@ -1,0 +1,48 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "zquant"
+version = "0.1.0"
+description = "zettaranc quantitative trading system — Python CLI toolkit for trend-based trading signals"
+authors = ["jununfly"]
+readme = "README.md"
+license = "MIT"
+packages = [{ include = "zquant", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.14"
+typer = { extras = ["all"], version = "^0.12" }
+textual = "^0.52"
+pandas = "^2.2"
+numpy = "^1.26"
+fastapi = "^0.115"
+uvicorn = { extras = ["standard"], version = "^0.30" }
+flet = "^0.27"
+flet-charts = "^0.85"
+
+[tool.poetry.scripts]
+zquant = "zquant.cli.main:main"
+zquant-api = "zquant.api.__main__:main"
+zquant-ui = "zquant.ui.main:main"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2"
+ruff = "^0.4"
+
+[[tool.poetry.source]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+priority = "primary"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

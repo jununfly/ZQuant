@@ -207,12 +207,33 @@
     "1-12": {
       "id": "1-12",
       "label": "M6: TUI完整面板",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "面板结构?",
+          "answer": "单一textual App + TabbedContent四页 状态/扫描/仓位/回测",
+          "note": "用户选择"
+        },
+        {
+          "q": "扫描展示?",
+          "answer": "可筛选扫描表 DataTable + Select按信号类型筛选",
+          "note": "用户选择"
+        },
+        {
+          "q": "实时性?",
+          "answer": "手动刷新(R键/按钮) + 进页自动刷新一次",
+          "note": "用户选择"
+        },
+        {
+          "q": "关键坑?",
+          "answer": "Select挂载时触发Changed导致全市场扫描 需_scan_done守卫",
+          "note": "31s→0.4s"
+        }
+      ],
+      "notes": "M6全部子任务完成 6个pytest用例+端到端验证通过 dashboard CLI命令"
     },
     "1-7-7": {
       "id": "1-7-7",

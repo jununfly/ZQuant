@@ -57,6 +57,9 @@ class ApiClient:
     def status(self) -> dict:
         return self._request("GET", "/api/status")
 
+    def active_cap(self) -> dict:
+        return self._request("GET", "/api/active-cap")
+
     def scan(self, code: str | None = None, days: int = 3) -> dict:
         params = {"days": days}
         if code:

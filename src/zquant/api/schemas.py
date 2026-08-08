@@ -45,7 +45,8 @@ class LayerOut(BaseModel):
     target_amount: float
     current_amount: float
     delta: float
-    positions: list[dict] = Field(default_factory=list)
+    positions: list[dict] = Field(default_factory=list)  # 目标仓位项（code/target_amount/delta）
+    holdings: list[dict] = Field(default_factory=list)   # 当前持仓项（code/current_amount）
 
 
 class PositionOut(BaseModel):

@@ -273,7 +273,7 @@ def position(
         compute_active_capital_signal,
     )
     from zquant.position.engine import (
-        PositionItem,
+        HoldingsItem,
         PositionLayer,
         compute_adjustment,
     )
@@ -304,7 +304,7 @@ def position(
     )
     regime = sig.regime
 
-    def _parse_holdings(text: str) -> list[PositionItem]:
+    def _parse_holdings(text: str) -> list[HoldingsItem]:
         items = []
         for part in text.split(","):
             part = part.strip()
@@ -312,9 +312,9 @@ def position(
                 continue
             if ":" in part:
                 code, amt = part.split(":")
-                items.append(PositionItem(code=code.strip(), current_amount=float(amt)))
+                items.append(HoldingsItem(code=code.strip(), current_amount=float(amt)))
             else:
-                items.append(PositionItem(code=part.strip()))
+                items.append(HoldingsItem(code=part.strip()))
         return items
 
     holdings = {
@@ -349,8 +349,10 @@ def position(
                    f"| 应调 {'+' if lp.delta>=0 else ''}{lp.delta:,.0f}")
         if lp.positions:
             typer.echo("  个股(等权):")
+            cur_map = {h.code: h.current_amount for h in lp.holdings}
             for p in lp.positions:
-                label = f"{p.code}  当前 ¥{p.current_amount:,.0f}  →目标 ¥{p.target_amount:,.0f}"
+                cur = cur_map.get(p.code, 0.0)
+                label = f"{p.code}  当前 ¥{cur:,.0f}  →目标 ¥{p.target_amount:,.0f}"
                 typer.echo(f"    {label}")
 
     typer.echo("\n提示: 空头/震荡期优先降总仓位，主线留龙头底仓，支线严格执行滴滴止损。")

@@ -32,6 +32,11 @@ class _FakeHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith("/api/health"):
             self._respond({"status": "ok"})
+        elif self.path.startswith("/api/active-cap"):
+            self._respond({"active_capital": [
+                {"date": "2026-08-07", "value": 1000},
+                {"date": "2026-08-08", "value": 1060},
+            ]})
         elif self.path.startswith("/api/status"):
             self._respond({"tdx_available": True, "active_capital_days": 2,
                            "latest": {"date": "2026-08-08", "value": 1060,
@@ -86,6 +91,13 @@ def test_client_status(api_server):
     data = c.status()
     assert data["tdx_available"] is True
     assert data["latest"]["regime"] == "bull"
+
+
+def test_client_active_cap(api_server):
+    c = ApiClient(api_server)
+    data = c.active_cap()
+    assert len(data["active_capital"]) == 2
+    assert data["active_capital"][0]["value"] == 1000
 
 
 def test_client_scan_with_code(api_server):

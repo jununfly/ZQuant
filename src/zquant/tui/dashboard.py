@@ -286,7 +286,7 @@ class PositionPanel(Container):
     def _compute(self) -> None:
         from zquant.indicators.active_capital import compute_active_capital_signal
         from zquant.position.engine import (
-            PositionItem,
+            HoldingsItem,
             PositionLayer,
             compute_adjustment,
         )
@@ -300,7 +300,7 @@ class PositionPanel(Container):
             self.query_one("#pos-output", Static).update("总资产必须是数字")
             return
 
-        def _parse(text: str) -> list[PositionItem]:
+        def _parse(text: str) -> list[HoldingsItem]:
             items = []
             for part in text.split(","):
                 part = part.strip()
@@ -308,9 +308,9 @@ class PositionPanel(Container):
                     continue
                 if ":" in part:
                     c, amt = part.split(":")
-                    items.append(PositionItem(code=c.strip(), current_amount=float(amt)))
+                    items.append(HoldingsItem(code=c.strip(), current_amount=float(amt)))
                 else:
-                    items.append(PositionItem(code=part.strip()))
+                    items.append(HoldingsItem(code=part.strip()))
             return items
 
         holdings = {
@@ -344,8 +344,10 @@ class PositionPanel(Container):
         for lp in plan.layers:
             out.append(f"  {lp.name}: 目标 {lp.target_ratio*100:.0f}% "
                        f"(¥{lp.target_amount:,.0f}) 当前 ¥{lp.current_amount:,.0f}")
+            cur_map = {h.code: h.current_amount for h in lp.holdings}
             for p in lp.positions:
-                out.append(f"    {p.code}  ¥{p.current_amount:,.0f} → ¥{p.target_amount:,.0f}")
+                cur = cur_map.get(p.code, 0.0)
+                out.append(f"    {p.code}  ¥{cur:,.0f} → ¥{p.target_amount:,.0f}")
         self.query_one("#pos-output", Static).update("\n".join(out))
 
 

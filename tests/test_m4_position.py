@@ -19,7 +19,7 @@ from zquant.config import PositionConfig, load_config
 from zquant.indicators.active_capital import MarketRegime
 from zquant.position.engine import (
     LAYER_NAMES,
-    PositionItem,
+    HoldingsItem,
     PositionLayer,
     compute_adjustment,
     compute_target_plan,
@@ -128,7 +128,7 @@ def test_equal_weight_within_layer():
 
 def test_adjustment_add_position():
     holdings = {
-        PositionLayer.MAIN: [PositionItem("600000", current_amount=100_000.0)],
+        PositionLayer.MAIN: [HoldingsItem("600000", current_amount=100_000.0)],
     }
     plan = compute_adjustment(MarketRegime.BULL, ASSETS, _cfg(), holdings)
     main = plan.layer(PositionLayer.MAIN)
@@ -139,9 +139,9 @@ def test_adjustment_add_position():
 
 def test_adjustment_reduce_position_in_bear():
     holdings = {
-        PositionLayer.MAIN: [PositionItem("600000", current_amount=500_000.0)],
-        PositionLayer.SUB: [PositionItem("000001", current_amount=150_000.0)],
-        PositionLayer.DEFENSE: [PositionItem("510300", current_amount=100_000.0)],
+        PositionLayer.MAIN: [HoldingsItem("600000", current_amount=500_000.0)],
+        PositionLayer.SUB: [HoldingsItem("000001", current_amount=150_000.0)],
+        PositionLayer.DEFENSE: [HoldingsItem("510300", current_amount=100_000.0)],
     }
     plan = compute_adjustment(MarketRegime.BEAR, ASSETS, _cfg(), holdings)
     # 空头目标总仓位 20万，当前 75万 → 应减 55万

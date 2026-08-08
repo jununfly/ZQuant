@@ -36,11 +36,24 @@ LAYER_NAMES = {
 
 
 @dataclass
-class PositionItem:
-    """层内单只个股持仓。"""
+class HoldingsItem:
+    """单只个股的当前持仓（实际持有的事实）。
+
+    与「目标仓位项」区分：本类表达"现在实际拿着什么"。
+    """
 
     code: str
     current_amount: float = 0.0   # 当前市值
+
+
+@dataclass
+class PositionItem:
+    """单只个股的目标仓位项（规划）。
+
+    与「当前持仓」区分：本类表达"计划把仓位分到哪、每只多少"。
+    """
+
+    code: str
     target_amount: float = 0.0    # 目标市值（等权）
     delta: float = 0.0            # 应调金额（+加 -减）
 
@@ -55,7 +68,8 @@ class LayerPlan:
     target_amount: float = 0.0    # 目标金额
     current_amount: float = 0.0   # 当前持仓金额
     delta: float = 0.0            # 应调金额
-    positions: list[PositionItem] = field(default_factory=list)
+    positions: list[PositionItem] = field(default_factory=list)  # 目标仓位项
+    holdings: list[HoldingsItem] = field(default_factory=list)   # 当前持仓项
 
 
 @dataclass
@@ -170,7 +184,7 @@ def compute_adjustment(
     regime: MarketRegime,
     total_assets: float,
     cfg: PositionConfig,
-    holdings: dict[PositionLayer, list[str | PositionItem]] | None = None,
+    holdings: dict[PositionLayer, list[str | HoldingsItem]] | None = None,
 ) -> PositionPlan:
     """传入实际持仓，计算各层应加 / 应减仓金额。
 
@@ -179,10 +193,10 @@ def compute_adjustment(
         total_assets: 当前总资产
         cfg: 仓位配置
         holdings: 各层当前持仓。key 为 PositionLayer，
-                  value 为个股列表（str 表示仅代码、等权；或 PositionItem 带市值）。
+                  value 为个股列表（str 表示仅代码、等权；或 HoldingsItem 带市值）。
 
     Returns:
-        PositionPlan：含各层 current/delta 与层内等权目标。
+        PositionPlan：含各层 current/delta、持仓明细与层内等权目标。
     """
     holdings = holdings or {}
     target = compute_target_plan(regime, total_assets, cfg)
@@ -191,24 +205,29 @@ def compute_adjustment(
     for layer in target.layers:
         items = holdings.get(layer.layer, [])
         # 汇总当前市值
-        if items and isinstance(items[0], PositionItem):
+        if items and isinstance(items[0], HoldingsItem):
             current = sum(i.current_amount for i in items)
-            item_objs = list(items)
+            holding_objs = list(items)
         else:
-            # 纯代码列表：当前市值未知，按等权估算
+            # 纯代码列表：当前市值未知，按等权估算（无持仓额）
             current = 0.0
-            item_objs = [PositionItem(code=c) for c in items]
+            holding_objs = [HoldingsItem(code=c) for c in items]
 
         layer.current_amount = round(current, 2)
+        layer.holdings = holding_objs
         total_current += current
 
-        # 层内等权分配目标
-        if items and layer.target_amount > 0:
-            per = round(layer.target_amount / len(item_objs), 2)
-            for it in item_objs:
-                it.target_amount = per
-                it.delta = round(per - it.current_amount, 2)
-        layer.positions = item_objs
+        # 层内等权分配目标（仅对已知持仓的个股）
+        if holding_objs and layer.target_amount > 0:
+            per = round(layer.target_amount / len(holding_objs), 2)
+            layer.positions = [
+                PositionItem(
+                    code=h.code,
+                    target_amount=per,
+                    delta=round(per - h.current_amount, 2),
+                )
+                for h in holding_objs
+            ]
         layer.delta = round(layer.target_amount - layer.current_amount, 2)
 
     target.total_current = round(total_current, 2)

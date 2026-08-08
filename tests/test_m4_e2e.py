@@ -15,7 +15,7 @@ def main():
     from zquant.config import load_config
     from zquant.indicators.active_capital import MarketRegime
     from zquant.position.engine import (
-        PositionItem,
+        HoldingsItem,
         PositionLayer,
         compute_adjustment,
         compute_target_plan,
@@ -47,8 +47,8 @@ def main():
 
     # 4. 层内等权 + 实际调仓(多头加仓)
     holdings = {
-        PositionLayer.MAIN: [PositionItem("600000", 100_000.0), PositionItem("600001", 50_000.0)],
-        PositionLayer.SUB: [PositionItem("000001", 30_000.0)],
+        PositionLayer.MAIN: [HoldingsItem("600000", 100_000.0), HoldingsItem("600001", 50_000.0)],
+        PositionLayer.SUB: [HoldingsItem("000001", 30_000.0)],
     }
     adj = compute_adjustment(MarketRegime.BULL, assets, p, holdings)
     main = adj.layer(PositionLayer.MAIN)
@@ -61,9 +61,9 @@ def main():
 
     # 5. 空头压缩减仓
     bear_holdings = {
-        PositionLayer.MAIN: [PositionItem("600000", 500_000.0)],
-        PositionLayer.SUB: [PositionItem("000001", 150_000.0)],
-        PositionLayer.DEFENSE: [PositionItem("510300", 100_000.0)],
+        PositionLayer.MAIN: [HoldingsItem("600000", 500_000.0)],
+        PositionLayer.SUB: [HoldingsItem("000001", 150_000.0)],
+        PositionLayer.DEFENSE: [HoldingsItem("510300", 100_000.0)],
     }
     bear = compute_adjustment(MarketRegime.BEAR, assets, p, bear_holdings)
     assert bear.total_cap_amount == 200_000.0

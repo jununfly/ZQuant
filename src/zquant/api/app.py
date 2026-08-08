@@ -54,11 +54,14 @@ def _layer_to_out(lp) -> LayerOut:
         positions=[
             {
                 "code": p.code,
-                "current_amount": p.current_amount,
                 "target_amount": p.target_amount,
                 "delta": p.delta,
             }
             for p in lp.positions
+        ],
+        holdings=[
+            {"code": h.code, "current_amount": h.current_amount}
+            for h in lp.holdings
         ],
     )
 
@@ -70,6 +73,17 @@ def create_app() -> FastAPI:
     @app.get("/api/health")
     def health() -> dict:
         return {"status": "ok"}
+
+    @app.get("/api/active-cap")
+    def active_cap() -> dict:
+        """活筹完整序列（Agent 单独取数据用）。"""
+        from zquant.storage.db import get_active_capital_series, init_db
+
+        root = _project_root()
+        conn = init_db(root / "data")
+        series = get_active_capital_series(conn)
+        conn.close()
+        return {"active_capital": series}
 
     @app.get("/api/status", response_model=StatusOut)
     def status() -> StatusOut:
@@ -175,7 +189,7 @@ def create_app() -> FastAPI:
     def position(body: PositionIn) -> PositionOut:
         from zquant.indicators.active_capital import MarketRegime, compute_active_capital_signal
         from zquant.position.engine import (
-            PositionItem,
+            HoldingsItem,
             PositionLayer,
             compute_adjustment,
         )
@@ -184,8 +198,8 @@ def create_app() -> FastAPI:
         root = _project_root()
         config = load_config(root / "config" / "default.toml")
 
-        def _items(holdings: list[PositionHolding]) -> list[PositionItem]:
-            return [PositionItem(code=h.code, current_amount=h.amount) for h in holdings]
+        def _items(holdings: list[PositionHolding]) -> list[HoldingsItem]:
+            return [HoldingsItem(code=h.code, current_amount=h.amount) for h in holdings]
 
         holdings = {
             PositionLayer.MAIN: _items(body.main),

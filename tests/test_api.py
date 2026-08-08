@@ -43,6 +43,16 @@ def test_health(client):
     assert r.json() == {"status": "ok"}
 
 
+# ---------- active-cap ----------
+
+def test_active_cap(client):
+    r = client.get("/api/active-cap")
+    assert r.status_code == 200
+    data = r.json()
+    assert "active_capital" in data
+    assert len(data["active_capital"]) >= 2
+
+
 # ---------- status ----------
 
 def test_status(client):

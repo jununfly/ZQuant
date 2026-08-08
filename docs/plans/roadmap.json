@@ -15,7 +15,8 @@
         "1-9",
         "1-10",
         "1-11",
-        "1-12"
+        "1-12",
+        "1-13"
       ],
       "decisions": [],
       "notes": ""
@@ -422,11 +423,21 @@
       "children": [],
       "decisions": [],
       "notes": "8步全部通过 8种信号类型(B1/B2/B3a/B3b/S1/S2/S3/DD)全检出"
+    },
+    "1-13": {
+      "id": "1-13",
+      "label": "M7: 多端界面（Flet）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "Flet多端前端 + FastAPI API层; 设计见 docs/designs/ui-flet-design.md"
     }
   },
   "metadata": {
     "created": "2026-08-08 18:44:43",
-    "updated": "2026-08-08 21:33:36",
+    "updated": "2026-08-08 21:39:05",
     "md_file": "D:\\workspace\\github\\jununfly\\ZQuant\\docs\\plans\\roadmap.md"
   }
 }

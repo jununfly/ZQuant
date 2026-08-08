@@ -76,7 +76,7 @@ def detect_didi(
                     "next_close": round(float(next_close), 2),
                     "gain_pct": round(float(gain_pct), 2),
                     "min_gain_pct": min_gain,
-                    "below_cost": gain_pct < 0,
+                    "below_cost": bool(gain_pct < 0),
                 },
             ))
 

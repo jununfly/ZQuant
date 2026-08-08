@@ -109,7 +109,7 @@
     "1-9": {
       "id": "1-9",
       "label": "M3: S系列卖点+滴滴风控",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -140,7 +140,7 @@
           "note": "divergence_period=20"
         }
       ],
-      "notes": ""
+      "notes": "M3全部子任务完成"
     },
     "1-10": {
       "id": "1-10",
@@ -323,7 +323,7 @@
     "1-9-1": {
       "id": "1-9-1",
       "label": "S1/S2/S3 卖点信号检测",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-9",
       "children": [],
@@ -333,7 +333,7 @@
     "1-9-2": {
       "id": "1-9-2",
       "label": "滴滴风控信号",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-9",
       "children": [],
@@ -343,7 +343,7 @@
     "1-9-3": {
       "id": "1-9-3",
       "label": "scan CLI 集成S信号",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-9",
       "children": [],
@@ -353,17 +353,17 @@
     "1-9-4": {
       "id": "1-9-4",
       "label": "M3 端到端验证",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-9",
       "children": [],
       "decisions": [],
-      "notes": ""
+      "notes": "8步全部通过 8种信号类型(B1/B2/B3a/B3b/S1/S2/S3/DD)全检出"
     }
   },
   "metadata": {
     "created": "2026-08-08 18:44:43",
-    "updated": "2026-08-08 19:24:22",
+    "updated": "2026-08-08 19:34:23",
     "md_file": "README.md"
   }
 }

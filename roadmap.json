@@ -177,7 +177,18 @@
       "mode": "exploit",
       "parent": "1-7",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "status 命令输出格式?",
+          "answer": "数据源状态 + 活筹指数最新值/涨跌幅/盘态 + 近5日趋势表",
+          "note": "用户同意"
+        },
+        {
+          "q": "信号持久化策略?",
+          "answer": "不持久化 change_pct/regime 实时从 raw value 计算 value 是唯一真相源",
+          "note": "用户同意"
+        }
+      ],
       "notes": ""
     },
     "1-7-12": {
@@ -193,7 +204,7 @@
   },
   "metadata": {
     "created": "2026-08-08 18:44:43",
-    "updated": "2026-08-08 18:50:37",
+    "updated": "2026-08-08 18:53:16",
     "md_file": "README.md"
   }
 }

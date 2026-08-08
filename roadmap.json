@@ -157,7 +157,7 @@
     "1-7-10": {
       "id": "1-7-10",
       "label": "活筹信号计算+多空判定",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-7",
       "children": [],
@@ -168,12 +168,12 @@
           "note": "用户同意"
         }
       ],
-      "notes": ""
+      "notes": "compute_active_capital_signal + classify_regime 已实现并验证"
     },
     "1-7-11": {
       "id": "1-7-11",
       "label": "CLI status 命令",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-7",
       "children": [],
@@ -189,7 +189,7 @@
           "note": "用户同意"
         }
       ],
-      "notes": ""
+      "notes": "已实现 status 命令 实时计算信号不持久化"
     },
     "1-7-12": {
       "id": "1-7-12",
@@ -204,7 +204,7 @@
   },
   "metadata": {
     "created": "2026-08-08 18:44:43",
-    "updated": "2026-08-08 18:53:16",
+    "updated": "2026-08-08 18:55:14",
     "md_file": "README.md"
   }
 }

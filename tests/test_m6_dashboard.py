@@ -141,6 +141,58 @@ def test_scan_panel_has_table_and_filter():
     _run(_t())
 
 
+def test_status_panel_renders_active_capital_sparkline():
+    async def _t():
+        app = DashboardApp()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            from textual.widgets import Sparkline
+
+            from zquant.tui.dashboard import StatusPanel
+            app.query_one(StatusPanel).refresh_panel()
+            spark = app.query_one("#status-chart", Sparkline)
+            # 已种入 2 天活筹数据 → sparkline 有数据
+            assert len(spark.data) >= 2
+    _run(_t())
+
+
+def test_scan_panel_renders_distribution_chart():
+    async def _t():
+        app = DashboardApp()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            from textual.widgets import Static
+
+            from zquant.tui.dashboard import ScanPanel
+            panel = app.query_one(ScanPanel)
+            # 模拟扫描结果：直接渲染分布
+            rows = [
+                ("2026-01-01", "600000", "B1", "超跌", ""),
+                ("2026-01-02", "600000", "B1", "超跌", ""),
+                ("2026-01-03", "600000", "S2", "破位", ""),
+            ]
+            panel._render_distribution(rows)
+            out = str(app.query_one("#scan-chart", Static).render())
+            assert "信号分布" in out
+            assert "B1" in out
+            assert "S2" in out
+    _run(_t())
+
+
+def test_scan_distribution_empty():
+    async def _t():
+        app = DashboardApp()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            from textual.widgets import Static
+
+            from zquant.tui.dashboard import ScanPanel
+            app.query_one(ScanPanel)._render_distribution([])
+            out = str(app.query_one("#scan-chart", Static).render())
+            assert out == ""
+    _run(_t())
+
+
 def test_dashboard_cli_registered():
     from zquant.cli.main import app as cli_app
     callbacks = [getattr(c, "callback", None) for c in cli_app.registered_commands]

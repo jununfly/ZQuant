@@ -56,10 +56,11 @@ REGIME_LABELS = {
 
 
 class StatusPanel(Container):
-    """状态页：数据源 + 活筹盘态 + 近5日趋势。"""
+    """状态页：数据源 + 活筹盘态 + 活筹曲线 + 近5日趋势。"""
 
     def compose(self) -> ComposeResult:
         yield Static("", id="status-content")
+        yield Sparkline([], id="status-chart")
 
     def on_mount(self) -> None:
         self.refresh_panel()
@@ -108,6 +109,11 @@ class StatusPanel(Container):
                 )
                 out.append(f"  {ss.date[5:]}  {ss.value:>10.0f}  "
                            f"{ss.change_pct:+6.2f}%  {REGIME_LABELS[ss.regime]}")
+
+            # 活筹历史曲线可视化
+            spark = self.query_one("#status-chart", Sparkline)
+            spark.data = [float(r["value"]) for r in series]
+            spark.refresh()
         else:
             out.append("(暂无活筹数据，请到扫描页/CLI 回填)")
 
@@ -135,6 +141,7 @@ class ScanPanel(Container):
             ),
             Static("", id="scan-status"),
         )
+        yield Static("", id="scan-chart")
         yield DataTable(id="scan-table")
 
     def on_mount(self) -> None:
@@ -151,6 +158,8 @@ class ScanPanel(Container):
         self.query_one("#scan-status", Static).update(
             "输入代码扫描单只，或留空全市场扫描（耗时约数秒）"
         )
+        self.query_one("#scan-chart", Static).update("")
+        self._scan_done = False
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "scan-btn":
@@ -213,7 +222,31 @@ class ScanPanel(Container):
         for r in rows[:500]:
             table.add_row(*r)
         self._scan_done = True
+        self._render_distribution(rows)
         self.query_one("#scan-status", Static).update(f"共 {len(rows)} 个信号")
+
+    def _render_distribution(self, rows: list[tuple]) -> None:
+        """渲染信号类型分布条形图。"""
+        from collections import Counter
+
+        order = ["B1", "B2", "B3a", "B3b", "S1", "S2", "S3", "DD"]
+        counts = Counter(r[2] for r in rows)
+        total = len(rows)
+        if total == 0:
+            self.query_one("#scan-chart", Static).update("")
+            return
+
+        # 条形长度按比例缩放到约 30 字符
+        max_count = max(counts.get(t, 0) for t in order) or 1
+        lines = ["【信号分布】"]
+        for t in order:
+            c = counts.get(t, 0)
+            if c == 0:
+                continue
+            bar = "█" * max(1, round(c / max_count * 30))
+            pct = c / total * 100
+            lines.append(f"  {t:4s} {bar} {c:4d} ({pct:4.1f}%)")
+        self.query_one("#scan-chart", Static).update("\n".join(lines))
 
     def on_select_changed(self, event: Select.Changed) -> None:
         # 仅在有扫描结果后允许筛选；忽略挂载时的初始 Changed 事件
@@ -446,6 +479,8 @@ class DashboardApp(App):
     #status-content, #pos-output, #bt-summary, #bt-stats { padding: 1; }
     #bt-chart { height: 5; margin: 1; }
     #bt-flow { height: 10; }
+    #status-chart { height: 5; margin: 1; }
+    #scan-chart { height: auto; padding: 0 1; }
     """
 
     BINDINGS = [

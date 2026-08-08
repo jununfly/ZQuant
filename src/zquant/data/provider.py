@@ -31,9 +31,17 @@ class DataProvider(ABC):
 
     @abstractmethod
     def get_index_daily(
-        self, code: str, start: date | None = None, end: date | None = None
+        self, code: str, start: date | None = None, end: date | None = None,
+        market: str | None = None,
     ) -> pd.DataFrame:
-        """获取指数日线（上证/深证/创业板）。"""
+        """获取指数日线（上证/深证/创业板）。
+
+        Args:
+            code: 指数代码
+            start: 起始日期
+            end: 结束日期
+            market: 显式指定市场，覆盖自动判断
+        """
         ...
 
     @abstractmethod

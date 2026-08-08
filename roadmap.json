@@ -1,122 +1,199 @@
 {
-  "project": "zquant",
-  "version": "0.1.0",
+  "title": "ZQuant",
   "description": "zettaranc 量化交易系统 — Python CLI 复现",
-  "tech_stack": {
-    "language": "python",
-    "version": ">=3.12,<3.14",
-    "package_manager": "poetry",
-    "cli": "typer",
-    "tui": "textual",
-    "config": "toml",
-    "database": "sqlite",
-    "testing": "pytest (M2 onwards)"
-  },
-  "data_sources": {
-    "primary": {
-      "type": "tdx",
-      "description": "通达信本地 .day 二进制文件解析"
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "label": "ZQuant",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": null,
+      "children": [
+        "1-7",
+        "1-8",
+        "1-9",
+        "1-10",
+        "1-11",
+        "1-12"
+      ],
+      "decisions": [],
+      "notes": ""
     },
-    "fallback": {
-      "type": "tushare",
-      "description": "Tushare Pro API（需 token）"
+    "1-7": {
+      "id": "1-7",
+      "label": "M1: 活筹指数数据链打通",
+      "status": "in_progress",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-7-7",
+        "1-7-8",
+        "1-7-9",
+        "1-7-10",
+        "1-7-11",
+        "1-7-12"
+      ],
+      "decisions": [
+        {
+          "q": "产物形态?",
+          "answer": "Python 库 + CLI (D)",
+          "note": "M1 快速原型"
+        },
+        {
+          "q": "数据源?",
+          "answer": "通达信本地 .day 默认 + Tushare 备选",
+          "note": "安装路径 C:/new_tdx"
+        },
+        {
+          "q": "活跃市值数据来源?",
+          "answer": "指南针软件每日人工回填 → SQLite → textual TUI",
+          "note": ""
+        },
+        {
+          "q": "参数策略?",
+          "answer": "全走 TOML 配置文件 不硬编码",
+          "note": "config/default.toml"
+        },
+        {
+          "q": "M1 测试策略?",
+          "answer": "快速原型不上 TDD M2 开始",
+          "note": ""
+        }
+      ],
+      "notes": ""
+    },
+    "1-8": {
+      "id": "1-8",
+      "label": "M2: B系列买点信号",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-9": {
+      "id": "1-9",
+      "label": "M3: S系列卖点+滴滴风控",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-10": {
+      "id": "1-10",
+      "label": "M4: 仓位量化框架",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-11": {
+      "id": "1-11",
+      "label": "M5: 回测引擎",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-12": {
+      "id": "1-12",
+      "label": "M6: TUI完整面板",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-7-7": {
+      "id": "1-7-7",
+      "label": "TDX .day 解析器验证",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [
+        {
+          "q": "TDX .day 格式?",
+          "answer": "<IIIIIfII 32字节: date/open/high/low/close(uint32 ÷100), amount(float), volume(uint32), reserved(uint32)",
+          "note": "原代码 <IffffII 28字节 格式错误 价格应为uint32非float"
+        },
+        {
+          "q": "TDX 路径验证?",
+          "answer": "C:/new_tdx/vipdoc/{sh,sz}/lday/ 确认可用 上证指数sh000001 个股600000 深证000001均正常",
+          "note": "数据覆盖2021-08至今"
+        }
+      ],
+      "notes": "格式修复为 <IIIIIfII 已验证上证指数+个股"
+    },
+    "1-7-8": {
+      "id": "1-7-8",
+      "label": "SQLite 建表+CRUD",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-7-9": {
+      "id": "1-7-9",
+      "label": "TUI 活筹回填面板",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-7-10": {
+      "id": "1-7-10",
+      "label": "活筹信号计算+多空判定",
+      "status": "in_progress",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [
+        {
+          "q": "指数代码与个股代码冲突如何路由?",
+          "answer": "get_index_daily 增加可选 market 参数 默认按指数代码规则自动判断(上证指数000001→sh 深证成指399001→sz) get_daily_kline 保持现有个股路由逻辑",
+          "note": "用户同意"
+        }
+      ],
+      "notes": ""
+    },
+    "1-7-11": {
+      "id": "1-7-11",
+      "label": "CLI status 命令",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-7-12": {
+      "id": "1-7-12",
+      "label": "M1 端到端验证",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": ""
     }
   },
-  "milestones": [
-    {
-      "id": "M1",
-      "name": "活筹指数 — 数据链打通",
-      "status": "pending",
-      "description": "跑通完整数据链路：通达信K线解析 → SQLite存储 → 活跃市值手动回填TUI → 盘态判断",
-      "deliverables": [
-        "TDX .day 文件解析器（可正确解析 sh/sz K线）",
-        "SQLite 建表 + CRUD 操作",
-        "textual TUI 面板：历史活跃市值表格 + 输入框",
-        "活跃市值日涨跌幅计算 + 多空判定 (≥4% / ≤-2.3%)",
-        "CLI: zquant fill-active-cap 启动 TUI",
-        "CLI: zquant status 输出当前活筹状态"
-      ],
-      "not_in_scope": [
-        "个股信号扫描 (M2)",
-        "回测引擎 (M5)",
-        "仓位计算 (M4)"
-      ]
-    },
-    {
-      "id": "M2",
-      "name": "B系列买点信号",
-      "status": "pending",
-      "description": "实现 B1/B2/B3 三类买入信号扫描 + pytest 测试",
-      "deliverables": [
-        "KDJ 指标计算",
-        "B1 超跌反弹：J值<阈值 + 企稳确认",
-        "B2 突破买点：放量突破20日线",
-        "B3 回踩买点：单针下20 / 砖型底部识别",
-        "CLI: zquant scan-buy 扫描全市场B信号"
-      ],
-      "depends_on": ["M1"]
-    },
-    {
-      "id": "M3",
-      "name": "S系列卖点 + 滴滴风控",
-      "status": "pending",
-      "description": "实现 S1/S2/S3 三级卖点 + 滴滴短线止损",
-      "deliverables": [
-        "S1 冲顶预警：J值钝化+放量滞涨",
-        "S2 破位预警：有效跌破20日线",
-        "S3 趋势终结：顶背离+均线拐头",
-        "滴滴战法：次日9:33涨幅<2%触发",
-        "CLI: zquant scan-sell 扫描持仓S信号"
-      ],
-      "depends_on": ["M2"]
-    },
-    {
-      "id": "M4",
-      "name": "仓位量化框架",
-      "status": "pending",
-      "description": "实现主线/支线/答应三层仓位分配 + 活筹动态调整",
-      "deliverables": [
-        "仓位计算引擎：主线50-70% / 支线10-20% / 答应10-20%",
-        "活筹联动：多头80% / 震荡50% / 空头20%",
-        "CLI: zquant position 输出当前推荐仓位分配"
-      ],
-      "depends_on": ["M1", "M2", "M3"]
-    },
-    {
-      "id": "M5",
-      "name": "回测引擎",
-      "status": "pending",
-      "description": "自研轻量回测：逐日遍历 + 信号匹配 + 收益统计",
-      "deliverables": [
-        "回测引擎：仓位模拟、滑点、手续费",
-        "信号回测：验证 B/S 信号历史胜率",
-        "收益统计：夏普比率 / 最大回撤 / 胜率",
-        "CLI: zquant backtest --start 2024-01-01 --end 2024-12-31"
-      ],
-      "depends_on": ["M2", "M3", "M4"]
-    },
-    {
-      "id": "M6",
-      "name": "TUI 完整面板",
-      "status": "pending",
-      "description": "textual 全功能面板：活筹趋势图 + 信号扫描 + 持仓管理",
-      "deliverables": [
-        "活筹趋势图（文本柱状图/终端图表）",
-        "信号扫描结果表格",
-        "持仓管理：录入 + 滴滴自动检测",
-        "CLI: zquant dashboard 启动全功能面板"
-      ],
-      "depends_on": ["M4"]
-    }
-  ],
-  "parameter_philosophy": {
-    "format": "toml",
-    "path": "config/default.toml",
-    "principle": "所有阈值均可调，不硬编码。初始值使用常见默认值，待回测后校准。"
-  },
-  "conventions": {
-    "tdd": "M1 快速原型，M2 开始上 TDD",
-    "minimal_implementation": "先跑通再迭代，用真实数据验证需求",
-    "feat_chore_separation": "改动严格分离 feat/chore，不自动 commit/push"
+  "metadata": {
+    "created": "2026-08-08 18:44:43",
+    "updated": "2026-08-08 18:50:37",
+    "md_file": "README.md"
   }
 }

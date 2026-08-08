@@ -15,7 +15,10 @@ from zquant.data.provider import DataProvider
 
 # 通达信 .day 文件每条记录 32 字节
 TDX_DAY_RECORD_SIZE = 32
-TDX_DAY_FORMAT = "<IffffII"  # date(uint32), open, high, low, close, amount, volume
+# 格式: date(uint32), open(uint32), high(uint32), low(uint32), close(uint32),
+#       amount(float), volume(uint32), reserved(uint32)
+# 价格以 ×100 整数存储，需除以 100 还原
+TDX_DAY_FORMAT = "<IIIIIfII"
 
 
 def parse_tdx_day_file(filepath: Path) -> pd.DataFrame:
@@ -39,8 +42,8 @@ def parse_tdx_day_file(filepath: Path) -> pd.DataFrame:
     records: list[dict] = []
     for i in range(0, len(raw), TDX_DAY_RECORD_SIZE):
         chunk = raw[i : i + TDX_DAY_RECORD_SIZE]
-        date_int, open_p, high_p, low_p, close_p, amount, volume = struct.unpack(
-            TDX_DAY_FORMAT, chunk
+        date_int, open_p, high_p, low_p, close_p, amount, volume, _reserved = (
+            struct.unpack(TDX_DAY_FORMAT, chunk)
         )
         # 通达信日期格式: YYYYMMDD 整数
         year = date_int // 10000
@@ -102,10 +105,46 @@ class TdxProvider(DataProvider):
         return df
 
     def get_index_daily(
-        self, code: str, start: date | None = None, end: date | None = None
+        self,
+        code: str,
+        start: date | None = None,
+        end: date | None = None,
+        market: str | None = None,
     ) -> pd.DataFrame:
-        # 指数K线复用相同的 .day 格式
-        return self.get_daily_kline(code, start, end)
+        """获取指数日K线。
+
+        指数代码路由规则（与个股不同）：
+        - 000xxx → 上证指数（sh），如 000001 上证综指
+        - 399xxx → 深证指数（sz），如 399001 深证成指、399006 创业板指
+        - 8xxxxx → 北证指数（bj），暂不支持
+
+        Args:
+            code: 指数代码（6位）
+            start: 起始日期
+            end: 结束日期
+            market: 显式指定市场 ('sh'/'sz')，覆盖自动判断
+        """
+        if market is None:
+            if code.startswith("399"):
+                market = "sz"
+            else:
+                # 000xxx 等上证指数默认路由到 sh
+                market = "sh"
+
+        market_dir = self._market_map.get(market)
+        if market_dir is None:
+            raise ValueError(f"Unknown market: {market}")
+
+        filename = self._code_to_filename(code, market)
+        filepath = market_dir / filename
+
+        df = parse_tdx_day_file(filepath)
+
+        if start:
+            df = df[df["date"] >= start]
+        if end:
+            df = df[df["date"] <= end]
+        return df
 
     def is_available(self) -> bool:
         return self.base_path.exists()

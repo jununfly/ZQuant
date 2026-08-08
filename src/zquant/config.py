@@ -43,7 +43,7 @@ class PositionConfig:
 
 @dataclass
 class DataConfig:
-    tdx_base_path: str = "C:\\zd_zsone\\T0002"
+    tdx_base_path: str = "C:\\new_tdx"
     tushare_token: str = ""
 
 
@@ -116,7 +116,7 @@ def load_config(config_path: str | Path = "config/default.toml") -> AppConfig:
             bear_total_max=_get("position.bear_total_max", 0.20),
         ),
         data=DataConfig(
-            tdx_base_path=_get("data.tdx_base_path", "C:\\zd_zsone\\T0002"),
+            tdx_base_path=_get("data.tdx_base_path", "C:\\new_tdx"),
             tushare_token=_get("data.tushare_token", ""),
         ),
         kdj=KDJConfig(

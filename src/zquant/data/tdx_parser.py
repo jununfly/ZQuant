@@ -66,7 +66,7 @@ def parse_tdx_day_file(filepath: Path) -> pd.DataFrame:
 class TdxProvider(DataProvider):
     """通达信本地数据提供者。"""
 
-    def __init__(self, base_path: str = "C:\\zd_zsone\\T0002"):
+    def __init__(self, base_path: str = "C:\\new_tdx"):
         self.base_path = Path(base_path)
         self._market_map = {
             "sh": self.base_path / "vipdoc" / "sh" / "lday",

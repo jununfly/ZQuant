@@ -64,7 +64,7 @@ bear_total_max = 0.20      # 空头期最高总仓位
 
 [data]
 # 数据源配置
-tdx_base_path = "C:\\zd_zsone\\T0002"  # 通达信数据目录（默认）
+tdx_base_path = "C:\\new_tdx"           # 通达信安装目录（含 vipdoc/）
 tushare_token = ""                      # Tushare token（可选）
 
 # KDJ 参数

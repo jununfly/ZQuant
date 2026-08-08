@@ -102,11 +102,15 @@ def create_app() -> FastAPI:
             recent.append(d)
             latest = d
 
+        # 完整活筹序列（画图用）
+        active_capital = [{"date": r["date"], "value": r["value"]} for r in series]
+
         return StatusOut(
             tdx_available=tdx_ok,
             active_capital_days=len(series),
             latest=latest,
             recent=recent,
+            active_capital=active_capital,
         )
 
     @app.get("/api/scan", response_model=ScanOut)
@@ -258,6 +262,7 @@ def create_app() -> FastAPI:
             final_capital=result.final_capital,
             metrics=result.metrics,
             trade_flow=[TradeOut(**t.__dict__) for t in result.trade_flow],
+            equity_curve=list(result.equity_curve),
         )
 
     return app

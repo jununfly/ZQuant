@@ -20,6 +20,7 @@ numpy = "^1.26"
 fastapi = "^0.115"
 uvicorn = { extras = ["standard"], version = "^0.30" }
 flet = "^0.27"
+flet-charts = "^0.85"
 
 [tool.poetry.scripts]
 zquant = "zquant.cli.main:main"

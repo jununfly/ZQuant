@@ -52,6 +52,9 @@ def test_status(client):
     assert "tdx_available" in data
     assert data["active_capital_days"] >= 2
     assert data["latest"]["regime"] == "bull"
+    # 完整活筹序列（画图用）
+    assert len(data["active_capital"]) >= 2
+    assert {"date", "value"} <= set(data["active_capital"][0])
 
 
 # ---------- scan ----------
@@ -102,6 +105,9 @@ def test_backtest_symbol(client):
     assert data["code"] == "600000"
     assert "total_return" in data["metrics"]
     assert isinstance(data["trade_flow"], list)
+    # 权益曲线（画图用）
+    assert len(data["equity_curve"]) > 0
+    assert data["equity_curve"][0] == pytest.approx(100_000.0)
 
 
 def test_backtest_portfolio(client):

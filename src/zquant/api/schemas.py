@@ -15,6 +15,7 @@ class StatusOut(BaseModel):
     active_capital_days: int
     latest: dict | None = None          # 最新活筹信号（date/value/change_pct/regime）
     recent: list[dict] = Field(default_factory=list)  # 近5日趋势
+    active_capital: list[dict] = Field(default_factory=list)  # 完整活筹序列（画图用）
 
 
 class SignalOut(BaseModel):
@@ -82,6 +83,7 @@ class BacktestOut(BaseModel):
     final_capital: float
     metrics: dict
     trade_flow: list[TradeOut] = Field(default_factory=list)
+    equity_curve: list[float] = Field(default_factory=list)  # 权益曲线（画图用）
 
 
 # ---------- 请求模型 ----------

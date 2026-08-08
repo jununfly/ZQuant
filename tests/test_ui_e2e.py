@@ -57,7 +57,15 @@ def main():
     # 3. status
     st = c.status()
     assert st["latest"]["regime"] == "bull"
-    print(f"[3] status: 盘态={st['latest']['regime']} 活筹{st['active_capital_days']}天")
+    assert len(st["active_capital"]) >= 2  # 完整序列供图表
+    print(f"[3] status: 盘态={st['latest']['regime']} 活筹{st['active_capital_days']}天 "
+          f"曲线{len(st['active_capital'])}点")
+
+    # 3b. 图表构建(真实数据)
+    from zquant.ui.charts import ac_line_chart
+    chart = ac_line_chart(st["active_capital"])
+    assert chart is not None
+    print("[3b] 活筹曲线图: 构建成功")
 
     # 4. scan 单票
     sc = c.scan(code="600000", days=5)
@@ -72,7 +80,14 @@ def main():
     # 6. backtest
     bt = c.backtest(code="600000", capital=100_000, days=100)
     assert "total_return" in bt["metrics"]
-    print(f"[6] backtest: 总收益 {bt['metrics']['total_return']:+.2f}%")
+    assert len(bt["equity_curve"]) > 0  # 权益曲线供图表
+    print(f"[6] backtest: 总收益 {bt['metrics']['total_return']:+.2f}% "
+          f"曲线{len(bt['equity_curve'])}点")
+
+    # 6b. 权益曲线图表构建(真实数据)
+    from zquant.ui.charts import equity_line_chart
+    assert equity_line_chart(bt["equity_curve"]) is not None
+    print("[6b] 权益曲线图: 构建成功")
 
     server.should_exit = True
     t.join(timeout=5)

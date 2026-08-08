@@ -46,6 +46,15 @@ def build_status_view(client: ApiClient) -> ft.Control:
                 f"{r.get('change_pct'):+.2f}%  {r.get('regime')}"
             )
         )
+
+    # 活筹历史曲线
+    ac = data.get("active_capital", [])
+    if ac:
+        from zquant.ui.charts import ac_line_chart
+
+        rows.append(ft.Text("活筹历史曲线", style="titleSmall"))
+        rows.append(ac_line_chart(ac))
+
     return ft.Column(rows, scroll=ft.ScrollMode.AUTO)
 
 
@@ -73,10 +82,22 @@ def build_scan_view(client: ApiClient, code: str = "", days: int = 3) -> ft.Cont
         rows=cells,
         heading_row_height=32,
     )
-    return ft.Column(
-        [ft.Text(title), table],
-        scroll=ft.ScrollMode.AUTO,
-    )
+
+    # 信号类型分布条形图
+    from collections import Counter
+
+    order = ["B1", "B2", "B3a", "B3b", "S1", "S2", "S3", "DD"]
+    counts = Counter(s.get("signal_type", "") for s in data.get("signals", []))
+    counts = {t: counts[t] for t in order if counts[t] > 0}
+
+    widgets: list = [ft.Text(title)]
+    if counts:
+        from zquant.ui.charts import distribution_bar_chart
+
+        widgets.append(ft.Text("信号分布", style="titleSmall"))
+        widgets.append(distribution_bar_chart(counts))
+    widgets.append(table)
+    return ft.Column(widgets, scroll=ft.ScrollMode.AUTO)
 
 
 def build_position_view(client: ApiClient, assets: float = 1_000_000.0) -> ft.Control:
@@ -106,6 +127,15 @@ def build_position_view(client: ApiClient, assets: float = 1_000_000.0) -> ft.Co
                 f"¥{lp.get('target_amount', 0):,.0f}"
             )
         )
+
+    # 三层目标分配柱状图
+    layers = data.get("layers", [])
+    if layers:
+        from zquant.ui.charts import layers_bar_chart
+
+        rows.append(ft.Text("三层分配", style="titleSmall"))
+        rows.append(layers_bar_chart(layers))
+
     return ft.Column(rows, scroll=ft.ScrollMode.AUTO)
 
 
@@ -126,8 +156,18 @@ def build_backtest_view(client: ApiClient, code: str = "600000") -> ft.Control:
         ft.Text(f"总收益 {m.get('total_return', 0):+.2f}%  胜率 {m.get('win_rate', 0):.1f}%"),
         ft.Text(f"最大回撤 -{m.get('max_drawdown', 0):.2f}%  夏普 {m.get('sharpe', 0):.2f}"),
         ft.Divider(),
-        ft.Text("最近交易："),
     ]
+
+    # 权益曲线
+    curve = data.get("equity_curve", [])
+    if curve:
+        from zquant.ui.charts import equity_line_chart
+
+        rows.append(ft.Text("权益曲线", style="titleSmall"))
+        rows.append(equity_line_chart(curve))
+        rows.append(ft.Divider())
+
+    rows.append(ft.Text("最近交易："))
     for t in data.get("trade_flow", [])[-10:]:
         rows.append(
             ft.Text(

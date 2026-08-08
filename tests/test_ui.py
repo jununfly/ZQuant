@@ -1,8 +1,9 @@
-"""P1 Flet 骨架测试。
+"""P1/P2 Flet 客户端测试。
 
 覆盖:
 - api_client HTTP 封装(GET/POST/错误)
 - 页面构建函数(mock ApiClient)
+- 图表构建(flet-charts)
 """
 
 import json
@@ -10,6 +11,7 @@ import sys
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+import flet as ft
 import pytest
 
 sys.path.insert(0, "src")
@@ -118,12 +120,18 @@ class _MockClient:
     def status(self):
         return {"tdx_available": True, "active_capital_days": 2,
                 "latest": {"date": "2026-08-08", "value": 1060, "change_pct": 6.0,
-                           "regime": "bull"}, "recent": []}
+                           "regime": "bull"}, "recent": [],
+                "active_capital": [{"date": "2026-08-07", "value": 1000},
+                                   {"date": "2026-08-08", "value": 1060}]}
 
     def scan(self, code=None, days=3):
-        return {"count": 1, "signals": [{"date": "2026-08-08", "code": "600000",
-                                         "signal_type": "B1", "name": "超跌",
-                                         "details": {"j": -12}}]}
+        return {"count": 2,
+                "signals": [{"date": "2026-08-08", "code": "600000",
+                             "signal_type": "B1", "name": "超跌",
+                             "details": {"j": -12}},
+                            {"date": "2026-08-07", "code": "600000",
+                             "signal_type": "S2", "name": "破位",
+                             "details": {}}]}
 
     def position(self, assets=1_000_000):
         return {"regime": "bull", "total_cap_ratio": 0.8, "total_cap_amount": 800000,
@@ -136,7 +144,8 @@ class _MockClient:
         return {"code": "600000", "initial_capital": 100000, "final_capital": 120000,
                 "metrics": {"total_return": 20.0, "win_rate": 50.0,
                             "max_drawdown": 5.0, "sharpe": 1.0},
-                "trade_flow": []}
+                "trade_flow": [],
+                "equity_curve": [100000, 105000, 110000, 120000]}
 
 
 def test_build_status_view():
@@ -188,3 +197,41 @@ def test_pages_defined():
     from zquant.ui.main import PAGES
     assert len(PAGES) == 4
     assert [p[0] for p in PAGES] == ["概览", "扫描", "仓位", "回测"]
+
+
+# ---------- 图表构建 ----------
+
+def test_equity_line_chart():
+    from zquant.ui.charts import equity_line_chart
+    chart = equity_line_chart([100, 110, 105, 120])
+    assert chart is not None
+
+
+def test_ac_line_chart():
+    from zquant.ui.charts import ac_line_chart
+    chart = ac_line_chart([{"date": "a", "value": 100}, {"date": "b", "value": 110}])
+    assert chart is not None
+
+
+def test_distribution_bar_chart():
+    from zquant.ui.charts import distribution_bar_chart
+    chart = distribution_bar_chart({"B1": 3, "S2": 1})
+    assert chart is not None
+
+
+def test_layers_bar_chart():
+    from zquant.ui.charts import layers_bar_chart
+    chart = layers_bar_chart([{"target_amount": 480000}, {"target_amount": 160000}])
+    assert chart is not None
+
+
+def test_build_scan_view_includes_chart():
+    from zquant.ui.main import build_scan_view
+    v = build_scan_view(_MockClient(), code="600000")
+    assert isinstance(v, ft.Column)
+
+
+def test_build_backtest_view_includes_curve():
+    from zquant.ui.main import build_backtest_view
+    v = build_backtest_view(_MockClient())
+    assert isinstance(v, ft.Column)

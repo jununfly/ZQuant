@@ -145,12 +145,33 @@
     "1-10": {
       "id": "1-10",
       "label": "M4: 仓位量化框架",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "引擎定位?",
+          "answer": "两者都要 纯信号映射(compute_target_plan) + 实际持仓调仓(compute_adjustment)",
+          "note": "用户选择"
+        },
+        {
+          "q": "层内个股分配?",
+          "answer": "手动/等权 框架只给各层总上限 内部按用户持仓等权分配",
+          "note": "用户选择"
+        },
+        {
+          "q": "三层如何钳制?",
+          "answer": "各层目标占比 = 总仓位上限 × 层share(主线0.6支线0.2答应0.2) 钳制到各自[min,max]区间 相对总仓位",
+          "note": "主线50-70% 支线10-20% 答应10-20%"
+        },
+        {
+          "q": "交付形态?",
+          "answer": "position引擎模块 + zquant position CLI命令 传 --assets/--main/--sub/--defense",
+          "note": "用户选择 未走M2式TDD以外的额外验证 但补了pytest单测+端到端脚本"
+        }
+      ],
+      "notes": "M4全部子任务完成 14个pytest用例+端到端验证通过 盘态→总仓→三层→调仓链路打通"
     },
     "1-11": {
       "id": "1-11",

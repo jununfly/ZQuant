@@ -17,9 +17,12 @@ typer = { extras = ["all"], version = "^0.12" }
 textual = "^0.52"
 pandas = "^2.2"
 numpy = "^1.26"
+fastapi = "^0.115"
+uvicorn = { extras = ["standard"], version = "^0.30" }
 
 [tool.poetry.scripts]
 zquant = "zquant.cli.main:main"
+zquant-api = "zquant.api.__main__:main"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2"

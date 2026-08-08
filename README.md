@@ -28,9 +28,12 @@ zquant status
 
 ```
 src/zquant/
+├── api/          # FastAPI 适配层（供 Flet/Agent 调用）
 ├── cli/          # typer CLI 入口
 ├── data/         # 数据源（通达信 + Tushare）
 ├── indicators/   # 信号计算（活筹 / B/S / 滴滴）
+├── position/     # 仓位量化框架
+├── backtest/     # 回测引擎
 ├── storage/      # SQLite 持久化
 ├── tui/          # textual TUI 面板
 └── config.py     # TOML 配置加载

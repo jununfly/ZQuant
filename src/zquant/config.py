@@ -42,12 +42,24 @@ class SignalConfig:
 
 @dataclass
 class PositionConfig:
+    # 三层各自仓位上限（占当前总仓位的比例）
     main_line_max: float = 0.70
     sub_line_max: float = 0.20
     defense_max: float = 0.20
+    # 三层各自仓位下限（占当前总仓位比例，用于钳制）
+    main_line_min: float = 0.50
+    sub_line_min: float = 0.10
+    defense_min: float = 0.10
+    # 总仓位随盘态动态调整的上限（占总资产比例）
     bull_total_max: float = 0.80
     neutral_total_max: float = 0.50
     bear_total_max: float = 0.20
+    # 三层目标占比（占当前总仓位，sum 通常为 1.0）
+    main_share: float = 0.60
+    sub_share: float = 0.20
+    defense_share: float = 0.20
+    # 空头极端期是否允许完全空仓
+    allow_full_cash: bool = True
 
 
 @dataclass
@@ -129,9 +141,16 @@ def load_config(config_path: str | Path = "config/default.toml") -> AppConfig:
             main_line_max=_get("position.main_line_max", 0.70),
             sub_line_max=_get("position.sub_line_max", 0.20),
             defense_max=_get("position.defense_max", 0.20),
+            main_line_min=_get("position.main_line_min", 0.50),
+            sub_line_min=_get("position.sub_line_min", 0.10),
+            defense_min=_get("position.defense_min", 0.10),
             bull_total_max=_get("position.bull_total_max", 0.80),
             neutral_total_max=_get("position.neutral_total_max", 0.50),
             bear_total_max=_get("position.bear_total_max", 0.20),
+            main_share=_get("position.main_share", 0.60),
+            sub_share=_get("position.sub_share", 0.20),
+            defense_share=_get("position.defense_share", 0.20),
+            allow_full_cash=_get("position.allow_full_cash", True),
         ),
         data=DataConfig(
             tdx_base_path=_get("data.tdx_base_path", "C:\\new_tdx"),

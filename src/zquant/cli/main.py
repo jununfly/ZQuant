@@ -1,8 +1,8 @@
 """zquant CLI — typer 入口."""
 
 import json
-from pathlib import Path
 from datetime import date, timedelta
+from pathlib import Path
 
 import typer
 
@@ -33,7 +33,6 @@ def fill_active_cap():
 @app.command()
 def status():
     """查看当前系统状态：数据覆盖范围、活筹趋势、最近信号。"""
-    from pathlib import Path
 
     from zquant.config import load_config
     from zquant.data.tdx_parser import TdxProvider
@@ -123,8 +122,8 @@ def scan(
     from zquant.config import load_config
     from zquant.data.tdx_parser import TdxProvider
     from zquant.signals.b_signals import detect_b_signals
-    from zquant.signals.s_signals import detect_s_signals
     from zquant.signals.didi import detect_didi
+    from zquant.signals.s_signals import detect_s_signals
     from zquant.storage.db import init_db, insert_daily_signal
 
     project_root = _resolve_project_root()
@@ -235,7 +234,8 @@ def scan(
         typer.echo("-" * 60)
         for s in sorted(found_signals, key=lambda x: (x.date, x.signal_type.value), reverse=True):
             detail_str = ", ".join(f"{k}={v}" for k, v in s.details.items())
-            typer.echo(f"{s.date:12s} {s.code:8s} {s.signal_type.value:5s} {s.name:8s} {detail_str}")
+            row = f"{s.date:12s} {s.code:8s} {s.signal_type.value:5s} {s.name:8s} {detail_str}"
+            typer.echo(row)
 
     typer.echo(f"\n共 {len(found_signals)} 个信号 | 扫描 {scanned} 只, 错误 {errors} 只")
     if save and found_signals:
@@ -246,6 +246,106 @@ def _parse_date(date_str: str) -> date:
     """解析 YYYY-MM-DD 日期字符串。"""
     parts = date_str.split("-")
     return date(int(parts[0]), int(parts[1]), int(parts[2]))
+
+
+@app.command()
+def position(
+    assets: float = typer.Option(..., "--assets", "-a", help="当前总资产（元）"),
+    main: str = typer.Option(
+        "", "--main", "-m",
+        help="主线持仓，如 600000:100000,600001:50000（代码:市值）",
+    ),
+    sub: str = typer.Option("", "--sub", "-s", help="支线持仓，格式同 main"),
+    defense: str = typer.Option("", "--defense", "-d", help="答应（防御）持仓，格式同 main"),
+):
+    """查看仓位建议：活筹盘态 → 总仓位上限 → 三层分配 → 应加减仓。"""
+    from zquant.config import load_config
+    from zquant.indicators.active_capital import (
+        MarketRegime,
+        compute_active_capital_signal,
+    )
+    from zquant.position.engine import (
+        PositionItem,
+        PositionLayer,
+        compute_adjustment,
+    )
+    from zquant.storage.db import get_active_capital_series, init_db
+
+    project_root = _resolve_project_root()
+    config = load_config(project_root / "config" / "default.toml")
+    data_dir = project_root / "data"
+
+    # --- 读取活筹盘态 ---
+    conn = init_db(data_dir)
+    series = get_active_capital_series(conn)
+    conn.close()
+
+    if not series:
+        typer.echo("✗ 暂无活筹数据，请先运行 zquant fill-active-cap 回填")
+        raise typer.Exit(1)
+
+    # 计算最新盘态
+    latest = series[-1]
+    prev_val = series[-2]["value"] if len(series) > 1 else latest["value"]
+    sig = compute_active_capital_signal(
+        today_value=latest["value"],
+        yesterday_value=prev_val,
+        date_str=latest["date"],
+        bull_threshold=config.active_capital.bull_threshold,
+        bear_threshold=config.active_capital.bear_threshold,
+    )
+    regime = sig.regime
+
+    def _parse_holdings(text: str) -> list[PositionItem]:
+        items = []
+        for part in text.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            if ":" in part:
+                code, amt = part.split(":")
+                items.append(PositionItem(code=code.strip(), current_amount=float(amt)))
+            else:
+                items.append(PositionItem(code=part.strip()))
+        return items
+
+    holdings = {
+        PositionLayer.MAIN: _parse_holdings(main),
+        PositionLayer.SUB: _parse_holdings(sub),
+        PositionLayer.DEFENSE: _parse_holdings(defense),
+    }
+
+    plan = compute_adjustment(regime, assets, config.position, holdings)
+
+    regime_labels = {
+        MarketRegime.BULL: "多头",
+        MarketRegime.BEAR: "空头",
+        MarketRegime.NEUTRAL: "震荡",
+    }
+
+    typer.echo("ZQuant 仓位建议")
+    typer.echo("=" * 46)
+    typer.echo(f"活筹盘态: ● {regime_labels[regime]}  ({latest['date']})")
+    typer.echo(f"当前资产: ¥{assets:,.0f}")
+    typer.echo(f"总仓位上限: {plan.total_cap_ratio*100:.0f}%  "
+               f"(目标 ¥{plan.total_cap_amount:,.0f})")
+    typer.echo(f"当前持仓: ¥{plan.total_current:,.0f}  "
+               f"应调: {'+' if plan.total_delta>=0 else ''}{plan.total_delta:,.0f}")
+    typer.echo(f"操作建议: {plan.action}")
+    typer.echo("-" * 46)
+
+    for lp in plan.layers:
+        typer.echo(f"\n【{lp.name}】")
+        typer.echo(f"  目标 {lp.target_ratio*100:.0f}%  "
+                   f"(¥{lp.target_amount:,.0f}) | 当前 ¥{lp.current_amount:,.0f} "
+                   f"| 应调 {'+' if lp.delta>=0 else ''}{lp.delta:,.0f}")
+        if lp.positions:
+            typer.echo("  个股(等权):")
+            for p in lp.positions:
+                label = f"{p.code}  当前 ¥{p.current_amount:,.0f}  →目标 ¥{p.target_amount:,.0f}"
+                typer.echo(f"    {label}")
+
+    typer.echo("\n提示: 空头/震荡期优先降总仓位，主线留龙头底仓，支线严格执行滴滴止损。")
 
 
 if __name__ == "__main__":

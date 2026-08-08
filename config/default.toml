@@ -56,15 +56,25 @@ check_time = "09:33"       # 次日早盘检查时刻
 min_gain_pct = 2.0         # 最低涨幅阈值
 
 [position]
-# 仓位框架
+# 仓位框架 —— 主线/支线/答应 三层配置
+# 三层上限/下限均按「当前总仓位」比例计
 main_line_max = 0.70       # 主线 50%-70%
+main_line_min = 0.50
 sub_line_max = 0.20        # 支线 10%-20%
+sub_line_min = 0.10
 defense_max = 0.20         # 答应 10%-20%
+defense_min = 0.10
 
-# 配合活筹动态调整
-bull_total_max = 0.80      # 多头期最高总仓位
-neutral_total_max = 0.50   # 震荡期最高总仓位
-bear_total_max = 0.20      # 空头期最高总仓位
+# 总仓位随活筹盘态动态调整的上限（占总资产比例）
+bull_total_max = 0.80      # 多头期最高总仓位 70%-80%
+neutral_total_max = 0.50   # 震荡期 30%-50%
+bear_total_max = 0.20      # 空头期 10%-20%，极端可空仓
+allow_full_cash = true     # 空头极端期是否允许完全空仓
+
+# 三层目标占比（占当前总仓位，sum 通常为 1.0）
+main_share = 0.60
+sub_share = 0.20
+defense_share = 0.20
 
 [data]
 # 数据源配置

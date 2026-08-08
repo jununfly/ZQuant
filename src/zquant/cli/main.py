@@ -348,5 +348,115 @@ def position(
     typer.echo("\n提示: 空头/震荡期优先降总仓位，主线留龙头底仓，支线严格执行滴滴止损。")
 
 
+@app.command()
+def backtest(
+    code: str = typer.Option(None, "--code", "-c", help="单票回测（股票代码）"),
+    codes: str = typer.Option(None, "--codes", help="组合回测（多代码逗号分隔，如 600000,000001）"),
+    capital: float = typer.Option(100_000.0, "--capital", help="初始资金"),
+    position_pct: float = typer.Option(0.30, "--position-pct", help="单票模式每次买入资金比例"),
+    use_active_cap: bool = typer.Option(
+        False, "--active-cap", help="组合模式使用活筹盘态择时（默认 false）"
+    ),
+    days: int = typer.Option(500, "--days", help="回测最近 N 个交易日"),
+):
+    """回测：单票固定仓位 / 组合（可集成活筹择时）。"""
+    from zquant.backtest.engine import backtest_portfolio, backtest_symbol
+    from zquant.config import load_config
+    from zquant.data.tdx_parser import TdxProvider
+    from zquant.storage.db import get_active_capital_series, init_db
+
+    project_root = _resolve_project_root()
+    config = load_config(project_root / "config" / "default.toml")
+    data_dir = project_root / "data"
+
+    provider = TdxProvider(config.data.tdx_base_path)
+    if not provider.is_available():
+        typer.echo(f"✗ TDX 数据源不可用: {config.data.tdx_base_path}")
+        raise typer.Exit(1)
+
+    end_date = date.today()
+    start_date = end_date - timedelta(days=days + 60)  # 额外预热
+
+    def _load_klines(stock_codes: list[str]) -> dict[str, object]:
+        result = {}
+        for c in stock_codes:
+            df = provider.get_daily_kline(c, start=start_date)
+            if df.empty:
+                typer.echo(f"✗ 未找到 {c} 的数据")
+                continue
+            result[c] = df
+        return result
+
+    # --- 单票模式 ---
+    if code:
+        df = provider.get_daily_kline(code, start=start_date)
+        if df.empty:
+            typer.echo(f"✗ 未找到 {code} 的数据")
+            raise typer.Exit(1)
+        result = backtest_symbol(
+            df, code, config.signals, config.kdj,
+            initial_capital=capital, position_pct=position_pct,
+        )
+        _print_backtest(result, single=True)
+        return
+
+    # --- 组合模式 ---
+    if not codes:
+        typer.echo("请指定 --code 单票 或 --codes 组合（逗号分隔）")
+        raise typer.Exit(1)
+
+    stock_list = [c.strip() for c in codes.split(",") if c.strip()]
+    klines = _load_klines(stock_list)
+    if not klines:
+        typer.echo("✗ 无可用K线数据")
+        raise typer.Exit(1)
+
+    ac_series: list = []
+    if use_active_cap:
+        conn = init_db(data_dir)
+        ac_series = get_active_capital_series(conn)
+        conn.close()
+        if not ac_series:
+            typer.echo("⚠ 无活筹数据，组合回测将按震荡盘态处理")
+
+    result = backtest_portfolio(
+        klines, ac_series, config.signals, config.kdj, config.position,
+        initial_capital=capital,
+        bull_threshold=config.active_capital.bull_threshold,
+        bear_threshold=config.active_capital.bear_threshold,
+    )
+    _print_backtest(result, single=False)
+
+
+def _print_backtest(result, single: bool):
+    """输出回测结果。"""
+    label = "组合" if not single else f"单票 {result.code}"
+    typer.echo("\nZQuant 回测结果")
+    typer.echo("=" * 50)
+    typer.echo(f"标的: {label}")
+    typer.echo(f"初始资金: ¥{result.initial_capital:,.0f}")
+    typer.echo(f"期末资金: ¥{result.final_capital:,.0f}")
+
+    m = result.metrics
+    typer.echo("\n【绩效指标】")
+    typer.echo(f"  总收益率:   {m.get('total_return', 0):+.2f}%")
+    typer.echo(f"  年化收益:   {m.get('annual_return', 0):+.2f}%")
+    typer.echo(f"  胜率:       {m.get('win_rate', 0):.1f}%")
+    typer.echo(f"  盈亏比:     {m.get('profit_loss_ratio', 0):.2f}")
+    typer.echo(f"  最大回撤:   -{m.get('max_drawdown', 0):.2f}%")
+    typer.echo(f"  夏普比率:   {m.get('sharpe', 0):.2f}")
+    typer.echo(f"  交易次数:   {m.get('trade_count', 0)}")
+    typer.echo(f"  总盈亏:     ¥{m.get('total_pnl', 0):,.2f}")
+
+    trades = result.trade_flow
+    if trades:
+        typer.echo(f"\n【交易流水（最近 {min(10, len(trades))} 笔）】")
+        for t in trades[-10:]:
+            typer.echo(
+                f"  {t.entry_date}→{t.exit_date}  {t.entry_signal}→{t.exit_signal}  "
+                f"盈亏 {t.pnl:+,.0f} ({t.pnl_pct:+.1f}%)"
+            )
+
+
 if __name__ == "__main__":
     main()

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZQuant</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f5f6f8; color: #222; }
+  header { background: #fff; padding: 10px 16px; border-bottom: 1px solid #e0e0e0;
+           display: flex; align-items: center; gap: 10px; }
+  header h1 { font-size: 18px; color: #1a73e8; }
+  #page-title { color: #666; font-size: 14px; }
+  nav { background: #fff; border-bottom: 1px solid #e0e0e0; display: flex; }
+  nav button { flex: 1; padding: 12px 0; border: none; background: none; cursor: pointer;
+               font-size: 15px; color: #555; border-bottom: 3px solid transparent; }
+  nav button.active { color: #1a73e8; border-bottom-color: #1a73e8; font-weight: bold; }
+  nav button:hover { background: #f0f4ff; }
+  main { max-width: 960px; margin: 16px auto; padding: 0 16px; }
+  .card { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .card h3 { font-size: 15px; margin-bottom: 12px; color: #333; }
+  .stat-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+  .stat { flex: 1; min-width: 120px; background: #f8f9fb; border-radius: 6px; padding: 10px; }
+  .stat .label { font-size: 12px; color: #888; }
+  .stat .value { font-size: 20px; font-weight: bold; margin-top: 4px; }
+  .up { color: #e53935; } .down { color: #43a047; } .flat { color: #757575; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 13px; }
+  .pill.bull { background: #fdecea; color: #e53935; }
+  .pill.neutral { background: #fff8e1; color: #f9a825; }
+  .pill.bear { background: #e8f5e9; color: #43a047; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; }
+  th { background: #f8f9fb; color: #555; font-weight: 600; }
+  tr:hover td { background: #fafbff; }
+  input, select { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+  button.action { padding: 8px 18px; background: #1a73e8; color: #fff; border: none;
+                  border-radius: 6px; cursor: pointer; font-size: 14px; }
+  button.action:hover { background: #1765c9; }
+  .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .error { color: #e53935; padding: 16px; text-align: center; }
+  .hint { color: #999; font-size: 12px; margin-top: 6px; }
+  .row { display: flex; gap: 24px; flex-wrap: wrap; }
+  .row .col { flex: 1; min-width: 300px; }
+  .bar-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .bar-item .bar-label { width: 60px; font-size: 13px; color: #555; }
+  .bar-item .bar-track { flex: 1; background: #f0f1f3; border-radius: 4px; height: 22px; overflow: hidden; }
+  .bar-item .bar-fill { height: 100%; border-radius: 4px; background: #7e57c2; display: flex; align-items: center; padding: 0 8px; }
+  .bar-item .bar-val { font-size: 12px; color: #fff; white-space: nowrap; }
+  .layer-list { margin-top: 8px; }
+  .layer-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; font-size: 14px; }
+  #loading { text-align: center; padding: 40px; color: #888; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ZQuant</h1>
+  <span id="page-title">概览</span>
+</header>
+<nav id="nav">
+  <button data-page="overview" class="active">概览</button>
+  <button data-page="scan">扫描</button>
+  <button data-page="position">仓位</button>
+  <button data-page="backtest">回测</button>
+</nav>
+<main id="main">
+  <div id="loading">加载中...</div>
+</main>
+
+<script>
+const API = "http://127.0.0.1:8000/api";
+
+// ---------- 工具 ----------
+function fmt(v, d = 2) { return v === null || v === undefined ? "-" : Number(v).toFixed(d); }
+function fmtMoney(v) { return v === null || v === undefined ? "-" : "¥" + Number(v).toLocaleString("zh-CN", {maximumFractionDigits: 0}); }
+function cls(v) { return v > 0 ? "up" : (v < 0 ? "down" : "flat"); }
+function pctCls(v) { return v >= 0 ? "up" : "down"; }
+
+async function api(path, opts = {}) {
+  const r = await fetch(API + path, opts);
+  if (!r.ok) throw new Error("HTTP " + r.status + ": " + await r.text());
+  return r.json();
+}
+
+function el(html) { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; }
+
+// ---------- 纯 SVG 图表(零依赖) ----------
+function svgLineChart(data, opts = {}) {
+  const { width = 600, height = 160, color = "#1a73e8" } = opts;
+  if (!data || data.length < 2) return '<div class="hint">暂无数据</div>';
+  const pad = { l: 8, r: 8, t: 10, b: 20 };
+  const vals = data.map(d => Number(d.value));
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const range = (max - min) || 1;
+  const stepX = (width - pad.l - pad.r) / (data.length - 1);
+  const pts = vals.map((v, i) => {
+    const x = pad.l + i * stepX;
+    const y = pad.t + (1 - (v - min) / range) * (height - pad.t - pad.b);
+    return [x, y];
+  });
+  const line = pts.map(p => p.join(",")).join(" ");
+  const last = pts[pts.length - 1];
+  const lastVal = vals[vals.length - 1];
+  const isUp = lastVal >= (vals.length > 1 ? vals[vals.length - 2] : lastVal);
+  const lc = isUp ? "#e53935" : "#43a047";  // A股: 涨红跌绿
+  let labels = "";
+  const n = Math.min(data.length, 6);
+  for (let i = 0; i < n; i++) {
+    const idx = Math.round((data.length - 1) * i / (n - 1));
+    const x = pts[idx][0];
+    labels += `<text x="${x}" y="${height - 4}" font-size="10" fill="#999" text-anchor="middle">${data[idx].date.slice(5)}</text>`;
+  }
+  return `<svg viewBox="0 0 ${width} ${height}" style="width:100%;height:auto">
+    <line x1="${pad.l}" y1="${pad.t}" x2="${width - pad.r}" y2="${pad.t}" stroke="#f0f0f0"/>
+    <line x1="${pad.l}" y1="${height - pad.b}" x2="${width - pad.r}" y2="${height - pad.b}" stroke="#f0f0f0"/>
+    <polyline points="${line}" fill="none" stroke="${lc}" stroke-width="2"/>
+    <circle cx="${last[0]}" cy="${last[1]}" r="3" fill="${lc}"/>
+    ${labels}
+  </svg><div style="font-size:12px;color:#888;margin-top:4px">最新 <b style="color:${lc}">${lastVal.toFixed(0)}</b> ${isUp ? "▲" : "▼"}</div>`;
+}
+
+function svgEquityLine(data, color = "#1a73e8") {
+  if (!data || data.length < 2) return '<div class="hint">暂无权益数据</div>';
+  const pts = data.map((v, i) => ({ value: Number(v) }));
+  return svgLineChart(pts, { color });
+}
+
+function barChart(items, opts = {}) {
+  const { color = "#7e57c2", unit = "" } = opts;
+  if (!items.length) return '<div class="hint">暂无数据</div>';
+  const max = Math.max(...items.map(i => i.value), 1);
+  return items.map(i => `
+    <div class="bar-item">
+      <div class="bar-label">${i.label}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${(i.value / max * 100)}%;background:${i.color || color}">
+          <span class="bar-val">${unit ? fmtMoney(i.value) : fmt(i.value)}</span>
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+// ---------- 页面: 概览 ----------
+async function renderOverview() {
+  const d = await api("/status");
+  const latest = d.latest;
+  const regimeMap = { bull: "多头", neutral: "震荡", bear: "空头" };
+  const regimeCls = latest ? (latest.regime === "bull" ? "bull" : latest.regime === "bear" ? "bear" : "neutral") : "neutral";
+  document.getElementById("main").innerHTML = `
+    <div class="card">
+      <h3>系统状态</h3>
+      <div class="stat-row">
+        <div class="stat"><div class="label">数据源(TDX)</div><div class="value">${d.tdx_available ? "可用" : "不可用"}</div></div>
+        <div class="stat"><div class="label">活筹数据</div><div class="value">${d.active_capital_days} 天</div></div>
+        <div class="stat"><div class="label">最新活筹值</div><div class="value ${latest ? pctCls(latest.change_pct) : "flat"}">${latest ? latest.value.toFixed(0) : "-"}</div></div>
+        <div class="stat"><div class="label">盘态</div><div class="value"><span class="pill ${regimeCls}">${latest ? (regimeMap[latest.regime] || latest.regime) : "-"}</span></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>活筹历史曲线</h3>
+      ${svgLineChart(d.active_capital || [])}
+    </div>
+    <div class="card">
+      <h3>近5日趋势</h3>
+      <table><tr><th>日期</th><th>值</th><th>涨跌幅</th><th>盘态</th></tr>
+      ${(d.recent || []).slice().reverse().map(r => `
+        <tr><td>${r.date}</td><td>${fmt(r.value, 0)}</td>
+        <td class="${pctCls(r.change_pct)}">${r.change_pct >= 0 ? "+" : ""}${fmt(r.change_pct)}%</td>
+        <td><span class="pill ${r.regime === "bull" ? "bull" : r.regime === "bear" ? "bear" : "neutral"}">${regimeMap[r.regime] || r.regime}</span></td></tr>`).join("")}
+      </table>
+    </div>`;
+}
+
+// ---------- 页面: 扫描 ----------
+let scanCode = "", scanDays = 3;
+async function renderScan() {
+  const q = scanCode ? `&code=${encodeURIComponent(scanCode)}` : "";
+  const d = await api(`/scan?days=${scanDays}${q}`);
+  document.getElementById("main").innerHTML = `
+    <div class="card">
+      <h3>信号扫描</h3>
+      <div class="toolbar">
+        <input id="scan-code" placeholder="代码(留空=全市场)" value="${scanCode}" style="width:160px">
+        <select id="scan-days">
+          ${[1,3,5,10].map(n => `<option value="${n}" ${n===scanDays?"selected":""}>近${n}天</option>`).join("")}
+        </select>
+        <button class="action" onclick="doScan()">扫描</button>
+      </div>
+      <div class="hint">扫描 ${d.scanned} 只，检出 ${d.count} 个信号</div>
+      <table><tr><th>日期</th><th>代码</th><th>信号</th><th>名称</th><th>详情</th></tr>
+      ${(d.signals || []).slice(0, 100).map(s => `
+        <tr><td>${s.date}</td><td>${s.code}</td>
+        <td><b style="color:${s.signal_type.startsWith("B") ? "#e53935" : s.signal_type.startsWith("S") ? "#43a047" : "#f9a825"}">${s.signal_type}</b></td>
+        <td>${s.name}</td><td style="font-size:12px;color:#888">${JSON.stringify(s.details || {}).slice(0, 40)}</td></tr>`).join("")}
+      </table>
+    </div>`;
+  document.getElementById("scan-code").onchange = e => scanCode = e.target.value;
+  document.getElementById("scan-days").onchange = e => scanDays = Number(e.target.value);
+}
+async function doScan() {
+  scanCode = document.getElementById("scan-code").value.trim();
+  scanDays = Number(document.getElementById("scan-days").value);
+  await renderScan();
+}
+
+// ---------- 页面: 仓位 ----------
+let posAssets = 1000000, posMain = "", posSub = "", posDefense = "";
+async function renderPosition() {
+  const body = {
+    assets: Number(posAssets),
+    main: parseHoldings(posMain),
+    sub: parseHoldings(posSub),
+    defense: parseHoldings(posDefense),
+  };
+  const d = await api("/position", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const regimeMap = { bull: "多头", neutral: "震荡", bear: "空头" };
+  document.getElementById("main").innerHTML = `
+    <div class="card">
+      <h3>仓位建议</h3>
+      <div class="toolbar">
+        <label>总资产 <input id="pos-assets" type="number" value="${posAssets}" style="width:120px"></label>
+      </div>
+      <div class="toolbar">
+        <input id="pos-main" placeholder="主线 代码:市值,逗号分隔" value="${posMain}" style="flex:1">
+        <input id="pos-sub" placeholder="支线 代码:市值" value="${posSub}" style="flex:1">
+        <input id="pos-defense" placeholder="答应 代码:市值" value="${posDefense}" style="flex:1">
+        <button class="action" onclick="doPosition()">计算</button>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="label">盘态</div><div class="value"><span class="pill ${d.regime==="bull"?"bull":d.regime==="bear"?"bear":"neutral"}">${regimeMap[d.regime]}</span></div></div>
+        <div class="stat"><div class="label">总仓位上限</div><div class="value">${fmt(d.total_cap_ratio*100,0)}%</div></div>
+        <div class="stat"><div class="label">目标金额</div><div class="value">${fmtMoney(d.total_cap_amount)}</div></div>
+        <div class="stat"><div class="label">当前持仓</div><div class="value">${fmtMoney(d.total_current)}</div></div>
+        <div class="stat"><div class="label">操作建议</div><div class="value ${d.action==="加仓"?"up":d.action==="减仓"?"down":"flat"}">${d.action}</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>三层分配</h3>
+      ${barChart((d.layers || []).map(l => ({ label: l.name, value: l.target_amount })), { unit: "money" })}
+      <div class="layer-list">
+        ${(d.layers || []).map(l => `
+          <div class="layer-item"><span>${l.name} (${fmt(l.target_ratio*100,0)}%)</span>
+          <span>目标 ${fmtMoney(l.target_amount)} | 当前 ${fmtMoney(l.current_amount)} | 应调 <b class="${pctCls(l.delta)}">${l.delta>=0?"+":""}${fmtMoney(l.delta)}</b></span></div>`).join("")}
+      </div>
+    </div>`;
+  document.getElementById("pos-assets").onchange = e => posAssets = e.target.value;
+  document.getElementById("pos-main").onchange = e => posMain = e.target.value;
+  document.getElementById("pos-sub").onchange = e => posSub = e.target.value;
+  document.getElementById("pos-defense").onchange = e => posDefense = e.target.value;
+}
+function parseHoldings(text) {
+  return (text || "").split(",").map(s => s.trim()).filter(Boolean).map(s => {
+    const [code, amount] = s.split(":").map(x => x.trim());
+    return { code, amount: amount ? Number(amount) : 0 };
+  });
+}
+async function doPosition() {
+  posAssets = document.getElementById("pos-assets").value;
+  posMain = document.getElementById("pos-main").value;
+  posSub = document.getElementById("pos-sub").value;
+  posDefense = document.getElementById("pos-defense").value;
+  await renderPosition();
+}
+
+// ---------- 页面: 回测 ----------
+let btCode = "600000";
+async function renderBacktest() {
+  const d = await api("/backtest", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code: btCode, capital: 100000, days: 200, mode: "symbol" }) });
+  const m = d.metrics || {};
+  document.getElementById("main").innerHTML = `
+    <div class="card">
+      <h3>回测</h3>
+      <div class="toolbar">
+        <input id="bt-code" placeholder="代码" value="${btCode}" style="width:120px">
+        <button class="action" onclick="doBacktest()">回测</button>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="label">代码</div><div class="value">${d.code}</div></div>
+        <div class="stat"><div class="label">总收益</div><div class="value ${pctCls(m.total_return||0)}">${m.total_return!=null?fmt(m.total_return)+"%":"-"}</div></div>
+        <div class="stat"><div class="label">胜率</div><div class="value">${m.win_rate!=null?fmt(m.win_rate,1)+"%":"-"}</div></div>
+        <div class="stat"><div class="label">最大回撤</div><div class="value down">${m.max_drawdown!=null?"-"+fmt(m.max_drawdown)+"%":"-"}</div></div>
+        <div class="stat"><div class="label">夏普</div><div class="value">${fmt(m.sharpe)}</div></div>
+      </div>
+      <div class="hint">初始 ${fmtMoney(d.initial_capital)} → 期末 ${fmtMoney(d.final_capital)}</div>
+    </div>
+    <div class="card">
+      <h3>权益曲线</h3>
+      ${svgEquityLine(d.equity_curve || [])}
+    </div>
+    <div class="card">
+      <h3>最近交易</h3>
+      <table><tr><th>买入</th><th>卖出</th><th>信号</th><th>盈亏</th></tr>
+      ${(d.trade_flow || []).slice(-10).reverse().map(t => `
+        <tr><td>${t.entry_date}</td><td>${t.exit_date}</td>
+        <td>${t.entry_signal}→${t.exit_signal}</td>
+        <td class="${pctCls(t.pnl||0)}">${fmtMoney(t.pnl)} (${fmt(t.pnl_pct,1)}%)</td></tr>`).join("")}
+      </table>
+    </div>`;
+  document.getElementById("bt-code").onchange = e => btCode = e.target.value;
+}
+async function doBacktest() {
+  btCode = document.getElementById("bt-code").value.trim();
+  await renderBacktest();
+}
+
+// ---------- 导航 ----------
+const RENDERERS = { overview: renderOverview, scan: renderScan, position: renderPosition, backtest: renderBacktest };
+const TITLES = { overview: "概览", scan: "扫描", position: "仓位", backtest: "回测" };
+
+document.getElementById("nav").addEventListener("click", async (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  document.querySelectorAll("#nav button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  const page = btn.dataset.page;
+  document.getElementById("page-title").textContent = TITLES[page];
+  document.getElementById("main").innerHTML = '<div id="loading">加载中...</div>';
+  try {
+    await RENDERERS[page]();
+  } catch (err) {
+    document.getElementById("main").innerHTML = `<div class="error">⚠ 加载失败: ${err.message}<br><span class="hint">请确认 API 服务已启动 (http://127.0.0.1:8000)</span></div>`;
+  }
+});
+
+// 初始加载
+renderOverview().catch(err => {
+  document.getElementById("main").innerHTML = `<div class="error">⚠ 加载失败: ${err.message}<br><span class="hint">请确认 API 服务已启动 (http://127.0.0.1:8000)</span></div>`;
+});
+</script>
+</body>
+</html>

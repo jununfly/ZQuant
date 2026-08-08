@@ -12,6 +12,10 @@ import urllib.parse
 import urllib.request
 from typing import Any
 
+from zquant.ui.debug_log import get_logger
+
+_log = get_logger("zquant.ui.api")
+
 
 class ApiError(Exception):
     """API 调用异常。"""
@@ -37,14 +41,19 @@ class ApiClient:
             headers["Content-Type"] = "application/json"
 
         req = urllib.request.Request(url, data=data, headers=headers, method=method)
+        _log.info("API → %s %s%s", method, path,
+                  f"?{urllib.parse.urlencode(params)}" if params else "")
         try:
             with urllib.request.urlopen(req, timeout=30) as resp:
                 raw = resp.read().decode("utf-8")
+                _log.info("API ← %s %s: HTTP %s", method, path, resp.status)
                 return json.loads(raw) if raw else None
         except urllib.error.HTTPError as e:
             detail = e.read().decode("utf-8", errors="replace")
+            _log.error("API ✗ %s %s: HTTP %s %s", method, path, e.code, detail[:200])
             raise ApiError(f"API {method} {path} failed: {e.code} {detail}") from e
         except urllib.error.URLError as e:
+            _log.error("API ✗ %s %s: 连接失败 %s", method, path, e.reason)
             raise ApiError(
                 f"无法连接 API 服务 {self.base_url}（请先启动 zquant-api）: {e.reason}"
             ) from e

@@ -9,6 +9,9 @@ from __future__ import annotations
 import flet as ft
 
 from zquant.ui.api_client import ApiClient, ApiError
+from zquant.ui.debug_log import get_logger
+
+_log = get_logger("zquant.ui.main")
 
 
 def _fmt(v: float | None, digits: int = 2) -> str:
@@ -21,7 +24,10 @@ def build_status_view(client: ApiClient) -> ft.Control:
     """概览页：数据源 + 活筹盘态 + 近5日。"""
     try:
         data = client.status()
+        _log.info("概览页: status OK, 活筹%s天, 盘态=%s",
+                  data.get("active_capital_days"), (data.get("latest") or {}).get("regime"))
     except ApiError as e:
+        _log.error("概览页: status 失败 %s", e)
         return ft.Text(f"⚠ {e}", color="red")
 
     rows = [
@@ -62,7 +68,9 @@ def build_scan_view(client: ApiClient, code: str = "", days: int = 3) -> ft.Cont
     """扫描页：单票/全市场信号表。"""
     try:
         data = client.scan(code=code or None, days=days)
+        _log.info("扫描页: code=%s days=%d 检出%d信号", code or "全市场", days, data.get("count", 0))
     except ApiError as e:
+        _log.error("扫描页: scan 失败 %s", e)
         return ft.Text(f"⚠ {e}", color="red")
 
     title = f"扫描：{code if code else '全市场'}（近{days}天） 检出 {data.get('count', 0)} 个信号"
@@ -104,7 +112,10 @@ def build_position_view(client: ApiClient, assets: float = 1_000_000.0) -> ft.Co
     """仓位页：三层分配 + 仓位建议。"""
     try:
         data = client.position(assets=assets)
+        _log.info("仓位页: assets=%.0f 盘态=%s 总仓%.0f%%",
+                  assets, data.get("regime"), data.get("total_cap_ratio", 0) * 100)
     except ApiError as e:
+        _log.error("仓位页: position 失败 %s", e)
         return ft.Text(f"⚠ {e}", color="red")
 
     rows = [
@@ -143,7 +154,10 @@ def build_backtest_view(client: ApiClient, code: str = "600000") -> ft.Control:
     """回测页：单票回测绩效 + 流水。"""
     try:
         data = client.backtest(code=code, capital=100_000.0, days=200)
+        _log.info("回测页: code=%s 收益%s%%", code,
+                  (data.get("metrics") or {}).get("total_return"))
     except ApiError as e:
+        _log.error("回测页: backtest 失败 %s", e)
         return ft.Text(f"⚠ {e}", color="red")
 
     m = data.get("metrics", {})
@@ -189,24 +203,54 @@ PAGES = [
 ]
 
 
+def _debug_border(color: str = "blue") -> ft.border.Border:
+    """调试期边框：给区域加视觉边界，便于与代码映射。"""
+    return ft.border.Border(
+        top=ft.border.BorderSide(1, color),
+        bottom=ft.border.BorderSide(1, color),
+        left=ft.border.BorderSide(1, color),
+        right=ft.border.BorderSide(1, color),
+    )
+
+
 def main(page: ft.Page, base_url: str = "http://127.0.0.1:8000") -> None:
     """Flet 应用入口。"""
     client = ApiClient(base_url)
     page.title = "ZQuant"
     page.theme_mode = ft.ThemeMode.LIGHT
+    page.padding = 0
+    page.spacing = 0
 
-    content = ft.Container(expand=True, padding=12)
+    # 内容区占满页面剩余空间（导航栏下方）。调试期加边框，标识区域边界。
+    content = ft.Container(
+        expand=True,
+        padding=12,
+        border=_debug_border("blue"),
+    )
+
+    # 顶部标题栏（显示当前页名，便于与代码 PAGES 映射）
+    title_bar = ft.Text("ZQuant · 概览", style="titleMedium", color="blue")
 
     def _show(index: int) -> None:
         name, _icon, builder = PAGES[index]
+        title_bar.value = f"ZQuant · {name}"
+        _log.info("导航切换 → %s (index=%d)", name, index)
         try:
             view = builder(client)
+            _log.info("页面 %s 构建完成", name)
         except Exception as e:  # noqa: BLE001 - UI 层兜底
-            view = ft.Text(f"⚠ {e}", color="red")
+            _log.error("页面 %s 构建异常: %s: %s", name, type(e).__name__, e)
+            # 错误直接展示在页面（含页面名与异常），便于定位
+            view = ft.Column([
+                ft.Text(f"⚠ [{name}] 页面加载失败", color="red", weight="bold"),
+                ft.Text(f"{type(e).__name__}: {e}", color="red"),
+            ])
         content.content = view
         page.update()
+        _log.info("page.update 完成 (index=%d)", index)
 
-    nav = ft.NavigationBar(
+    # 页面级底部导航（官方推荐：content 自动撑满剩余空间）
+    page.navigation_bar = ft.NavigationBar(
         selected_index=0,
         destinations=[
             ft.NavigationBarDestination(icon=icon, label=name)
@@ -215,11 +259,8 @@ def main(page: ft.Page, base_url: str = "http://127.0.0.1:8000") -> None:
         on_change=lambda e: _show(e.control.selected_index),
     )
 
-    page.add(ft.Column(
-        [content, nav],
-        expand=True,
-        spacing=0,
-    ))
+    # 初始视图直接挂到页面（避免首次动态更新丢失）
+    page.add(ft.Column([title_bar, content], spacing=0))
     _show(0)
 
 

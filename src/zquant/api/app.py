@@ -70,6 +70,16 @@ def create_app() -> FastAPI:
     """创建 FastAPI 应用。"""
     app = FastAPI(title="ZQuant API", version="0.1.0", description="ZQuant 量化系统 API")
 
+    # CORS：允许纯 HTML Web 端（http://127.0.0.1:8080）跨域调用
+    from fastapi.middleware.cors import CORSMiddleware
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://127.0.0.1:8080", "http://localhost:8080", "*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     @app.get("/api/health")
     def health() -> dict:
         return {"status": "ok"}

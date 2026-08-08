@@ -430,14 +430,59 @@
       "status": "pending",
       "mode": "explore",
       "parent": "1",
-      "children": [],
+      "children": [
+        "1-13-1",
+        "1-13-2",
+        "1-13-3",
+        "1-13-4"
+      ],
       "decisions": [],
       "notes": "Flet多端前端 + FastAPI API层; 设计见 docs/designs/ui-flet-design.md"
+    },
+    "1-13-1": {
+      "id": "1-13-1",
+      "label": "P0: 薄FastAPI API层",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-13",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-13-2": {
+      "id": "1-13-2",
+      "label": "P1: Flet骨架(四页导航)",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-13",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-13-3": {
+      "id": "1-13-3",
+      "label": "P2: 可视化落地(flet-charts)",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-13",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-13-4": {
+      "id": "1-13-4",
+      "label": "P3: 多端打包+agent验证",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-13",
+      "children": [],
+      "decisions": [],
+      "notes": ""
     }
   },
   "metadata": {
     "created": "2026-08-08 18:44:43",
-    "updated": "2026-08-08 21:39:05",
+    "updated": "2026-08-08 21:56:49",
     "md_file": "D:\\workspace\\github\\jununfly\\ZQuant\\docs\\plans\\roadmap.md"
   }
 }

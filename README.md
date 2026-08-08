@@ -36,6 +36,7 @@ src/zquant/
 ├── backtest/     # 回测引擎
 ├── storage/      # SQLite 持久化
 ├── tui/          # textual TUI 面板
+├── ui/           # Flet 多端客户端（M7）
 └── config.py     # TOML 配置加载
 ```
 

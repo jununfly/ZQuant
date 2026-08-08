@@ -176,12 +176,33 @@
     "1-11": {
       "id": "1-11",
       "label": "M5: 回测引擎",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "资金模型?",
+          "answer": "两者都要 单票固定仓位(backtest_symbol) + 组合集成M4活筹择时(backtest_portfolio)",
+          "note": "用户选择"
+        },
+        {
+          "q": "执行时点?",
+          "answer": "信号日收盘价成交 无未来函数",
+          "note": "用户选择"
+        },
+        {
+          "q": "S卖出映射?",
+          "answer": "逐级减仓 S1减半(50%) S2减至25% S3清仓 DD清仓",
+          "note": "用户选择"
+        },
+        {
+          "q": "输出指标?",
+          "answer": "标准绩效集 + 交易流水/权益曲线 总收益/年化/胜率/盈亏比/最大回撤/夏普",
+          "note": "用户选择"
+        }
+      ],
+      "notes": "M5全部子任务完成 13个pytest用例+端到端验证通过 单票/组合双模式 真实TDX数据验证"
     },
     "1-12": {
       "id": "1-12",

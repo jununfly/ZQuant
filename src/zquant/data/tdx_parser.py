@@ -148,3 +148,37 @@ class TdxProvider(DataProvider):
 
     def is_available(self) -> bool:
         return self.base_path.exists()
+
+    def list_all_stocks(self) -> list[tuple[str, str]]:
+        """枚举所有 A 股股票代码。
+
+        扫描 TDX lday 目录下的 .day 文件，过滤出股票（排除指数/ETF/债券）。
+
+        Returns:
+            [(code, market), ...] 如 [("600000", "sh"), ("000001", "sz")]
+        """
+        stocks: list[tuple[str, str]] = []
+        for market, market_dir in self._market_map.items():
+            if not market_dir.exists():
+                continue
+            for f in market_dir.glob("*.day"):
+                code = f.stem[2:]  # 去掉 sh/sz 前缀
+                if self._is_stock_code(code, market):
+                    stocks.append((code, market))
+        return sorted(stocks)
+
+    @staticmethod
+    def _is_stock_code(code: str, market: str) -> bool:
+        """判断是否为 A 股股票代码（排除指数/ETF/债券/可转债）。"""
+        if len(code) != 6:
+            return False
+        if market == "sh":
+            # 上证主板 600/601/603/605, 科创板 688
+            return code.startswith(("60", "68"))
+        if market == "sz":
+            # 深证主板 000/001/002/003, 创业板 300/301
+            # 排除指数 399xxx
+            if code.startswith("399"):
+                return False
+            return code.startswith(("00", "30"))
+        return False

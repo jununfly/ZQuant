@@ -23,7 +23,7 @@
     "1-7": {
       "id": "1-7",
       "label": "M1: 活筹指数数据链打通",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -61,7 +61,7 @@
           "note": ""
         }
       ],
-      "notes": ""
+      "notes": "M1全部子任务完成"
     },
     "1-8": {
       "id": "1-8",
@@ -69,8 +69,41 @@
       "status": "pending",
       "mode": "explore",
       "parent": "1",
-      "children": [],
-      "decisions": [],
+      "children": [
+        "1-8-1",
+        "1-8-2",
+        "1-8-3",
+        "1-8-4",
+        "1-8-5",
+        "1-8-6"
+      ],
+      "decisions": [
+        {
+          "q": "B3 量化定义?",
+          "answer": "前提:上升趋势(MA5>MA20) B3a单针下20:下影线>=实体50% B3b砖型底部:连续>=5日振幅<=1.5%量能<=前10日均量50%",
+          "note": "needle_shadow_ratio=0.5 brick params"
+        },
+        {
+          "q": "B2 量化定义?",
+          "answer": "5日均线上穿20日均线(金叉) + 当日量>=前5日均量1.5倍 + 收盘站上20日线 + 次日确认仍在20日线上",
+          "note": "volume_ratio=1.5 confirmation_days=1"
+        },
+        {
+          "q": "scan 命令形态?",
+          "answer": "zquant scan 全市场 zquant scan --days N 近N天 zquant scan code 单只详细",
+          "note": ""
+        },
+        {
+          "q": "选股方式?",
+          "answer": "全市场自动扫描 遍历TDX所有.day文件 不维护股票池",
+          "note": "不复用TDX .blk临时分类"
+        },
+        {
+          "q": "B1 量化定义?",
+          "answer": "KDJ J值<=-10连续>=2日 触发: J值拐头向上(当日J>前日J) 即超卖区企稳反转第一根",
+          "note": "j_oversold=-10 min_consecutive_days=2"
+        }
+      ],
       "notes": ""
     },
     "1-9": {
@@ -194,9 +227,69 @@
     "1-7-12": {
       "id": "1-7-12",
       "label": "M1 端到端验证",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "6步全部通过 依赖/配置/TDX/DB/信号/CLI"
+    },
+    "1-8-1": {
+      "id": "1-8-1",
+      "label": "MA+量比指标计算",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-2": {
+      "id": "1-8-2",
+      "label": "KDJ 指标计算",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-3": {
+      "id": "1-8-3",
+      "label": "B1/B2/B3 信号检测",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-4": {
+      "id": "1-8-4",
+      "label": "scan CLI 命令+结果输出",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-5": {
+      "id": "1-8-5",
+      "label": "M2 端到端验证",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-6": {
+      "id": "1-8-6",
+      "label": "TDX 全市场股票枚举",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-8",
       "children": [],
       "decisions": [],
       "notes": ""
@@ -204,7 +297,7 @@
   },
   "metadata": {
     "created": "2026-08-08 18:44:43",
-    "updated": "2026-08-08 18:55:14",
+    "updated": "2026-08-08 19:04:45",
     "md_file": "README.md"
   }
 }

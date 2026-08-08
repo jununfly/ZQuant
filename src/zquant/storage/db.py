@@ -119,3 +119,68 @@ def get_active_capital_series(
 
     cursor = conn.execute(query, params)
     return [{"date": row[0], "value": row[1]} for row in cursor.fetchall()]
+
+
+def insert_daily_signal(
+    conn: sqlite3.Connection,
+    date_str: str,
+    code: str,
+    signal_type: str,
+    details: str,
+) -> bool:
+    """插入信号记录（已存在则忽略）。
+
+    Args:
+        conn: 数据库连接
+        date_str: 信号日期 YYYY-MM-DD
+        code: 股票代码
+        signal_type: 信号类型 (B1/B2/B3a/B3b/S1/S2/S3/DD)
+        details: JSON 格式详情字符串
+
+    Returns:
+        True 如果插入了新记录
+    """
+    cursor = conn.execute(
+        "INSERT OR IGNORE INTO daily_signals (date, code, signal_type, details)"
+        " VALUES (?, ?, ?, ?)",
+        (date_str, code, signal_type, details),
+    )
+    conn.commit()
+    return cursor.rowcount > 0
+
+
+def query_daily_signals(
+    conn: sqlite3.Connection,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    code: Optional[str] = None,
+) -> list[dict]:
+    """查询信号记录。
+
+    Returns:
+        [{"date": str, "code": str, "signal_type": str, "details": str}, ...]
+    """
+    query = "SELECT date, code, signal_type, details FROM daily_signals"
+    params: list = []
+    conditions: list[str] = []
+
+    if start_date:
+        conditions.append("date >= ?")
+        params.append(start_date)
+    if end_date:
+        conditions.append("date <= ?")
+        params.append(end_date)
+    if code:
+        conditions.append("code = ?")
+        params.append(code)
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    query += " ORDER BY date DESC, code ASC"
+
+    cursor = conn.execute(query, params)
+    return [
+        {"date": row[0], "code": row[1], "signal_type": row[2], "details": row[3]}
+        for row in cursor.fetchall()
+    ]

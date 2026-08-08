@@ -19,9 +19,12 @@ class ActiveCapitalConfig:
 class SignalConfig:
     j_oversold: float = -10
     j_overbought: float = 100
+    b1_min_consecutive_days: int = 2
     ma_short: int = 5
     ma_mid: int = 20
     volume_ratio: float = 1.5
+    b2_confirmation_days: int = 1
+    b3_needle_shadow_ratio: float = 0.5
     brick_min_days: int = 5
     brick_max_range_pct: float = 1.5
     brick_volume_shrink: float = 0.5
@@ -96,9 +99,12 @@ def load_config(config_path: str | Path = "config/default.toml") -> AppConfig:
         signals=SignalConfig(
             j_oversold=_get("signals.b1.j_oversold", -10),
             j_overbought=_get("signals.s1.j_overbought", 100),
+            b1_min_consecutive_days=_get("signals.b1.min_consecutive_days", 2),
             ma_short=_get("signals.b2.ma_short", 5),
             ma_mid=_get("signals.b2.ma_mid", 20),
             volume_ratio=_get("signals.b2.volume_ratio", 1.5),
+            b2_confirmation_days=_get("signals.b2.confirmation_days", 1),
+            b3_needle_shadow_ratio=_get("signals.b3.needle_shadow_ratio", 0.5),
             brick_min_days=_get("signals.b3.brick.min_days", 5),
             brick_max_range_pct=_get("signals.b3.brick.max_daily_range_pct", 1.5),
             brick_volume_shrink=_get("signals.b3.brick.volume_shrink_ratio", 0.5),

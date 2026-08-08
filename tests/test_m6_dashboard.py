@@ -89,13 +89,42 @@ def test_backtest_panel_runs_single_symbol():
         async with app.run_test() as pilot:
             await pilot.pause()
             panel = app.query_one(BacktestPanel)
-            from textual.widgets import Input, Static
+            from textual.widgets import DataTable, Input, Sparkline, Static
             app.query_one("#bt-code", Input).value = "600000"
             app.query_one("#bt-capital", Input).value = "100000"
             panel._run()
-            out = str(app.query_one("#bt-output", Static).render())
-            assert "单票" in out
-            assert "总收益" in out
+            summary = str(app.query_one("#bt-summary", Static).render())
+            assert "单票" in summary
+            stats = str(app.query_one("#bt-stats", Static).render())
+            assert "总收益" in stats
+            # 权益曲线已填充 Sparkline
+            spark = app.query_one("#bt-chart", Sparkline)
+            assert spark.data and len(spark.data) > 0
+            # 交易流水表存在
+            flow = app.query_one("#bt-flow", DataTable)
+            assert flow is not None
+    _run(_t())
+
+
+def test_backtest_panel_renders_equity_sparkline():
+    async def _t():
+        app = DashboardApp()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            panel = app.query_one(BacktestPanel)
+            from textual.widgets import Sparkline
+
+            # 直接渲染模拟权益曲线
+            from zquant.backtest.engine import BacktestResult
+            fake = BacktestResult(
+                code="test", initial_capital=100_000.0,
+                final_capital=120_000.0,
+                equity_curve=[100000.0, 105000.0, 110000.0, 120000.0],
+                metrics={"total_return": 20.0, "trade_count": 1},
+            )
+            panel._render_result(fake, "单票 test")
+            spark = app.query_one("#bt-chart", Sparkline)
+            assert len(spark.data) == 4
     _run(_t())
 
 

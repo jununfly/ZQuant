@@ -20,6 +20,7 @@ from textual.widgets import (
     Header,
     Input,
     Select,
+    Sparkline,
     Static,
     TabbedContent,
     TabPane,
@@ -316,7 +317,7 @@ class PositionPanel(Container):
 
 
 class BacktestPanel(Container):
-    """回测页：单票/组合回测 → 绩效 + 流水。"""
+    """回测页：单票/组合回测 → 权益曲线可视化 + 绩效 + 流水。"""
 
     def compose(self) -> ComposeResult:
         yield Horizontal(
@@ -328,12 +329,18 @@ class BacktestPanel(Container):
             Button("刷新", id="bt-refresh"),
             Static("", id="bt-status"),
         )
-        yield Static("", id="bt-output")
+        yield Static("", id="bt-summary")
+        yield Sparkline([], id="bt-chart")
+        yield Static("", id="bt-stats")
+        yield DataTable(id="bt-flow")
 
     def on_mount(self) -> None:
-        self.query_one("#bt-output", Static).update(
+        self.query_one("#bt-summary", Static).update(
             "输入代码（单票）或多个代码（组合），点击『回测』"
         )
+        table = self.query_one("#bt-flow", DataTable)
+        table.clear(columns=True)
+        table.add_columns("买入", "卖出", "信号", "盈亏", "盈亏%")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "bt-btn":
@@ -358,7 +365,7 @@ class BacktestPanel(Container):
         end = date.today()
         start = end - timedelta(days=500)
 
-        out: list[str] = []
+        label: str
         if "," in code_str:
             codes = [c.strip() for c in code_str.split(",") if c.strip()]
             klines = {}
@@ -372,7 +379,7 @@ class BacktestPanel(Container):
                 bull_threshold=config.active_capital.bull_threshold,
                 bear_threshold=config.active_capital.bear_threshold,
             )
-            out.append(f"组合({len(klines)}只)")
+            label = f"组合({len(klines)}只)"
         else:
             code = code_str.strip()
             df = provider.get_daily_kline(code, start=start)
@@ -381,22 +388,46 @@ class BacktestPanel(Container):
                 return
             result = backtest_symbol(df, code, config.signals, config.kdj,
                                      initial_capital=capital)
-            out.append(f"单票 {code}")
+            label = f"单票 {code}"
 
-        m = result.metrics
-        out.append(f"初始 ¥{result.initial_capital:,.0f} → 期末 ¥{result.final_capital:,.0f}")
-        out.append(f"总收益 {m.get('total_return', 0):+.2f}%  "
-                   f"年化 {m.get('annual_return', 0):+.2f}%")
-        out.append(f"胜率 {m.get('win_rate', 0):.1f}%  盈亏比 {m.get('profit_loss_ratio', 0):.2f}")
-        out.append(f"最大回撤 -{m.get('max_drawdown', 0):.2f}%  "
-                   f"夏普 {m.get('sharpe', 0):.2f}")
-        out.append(f"交易 {m.get('trade_count', 0)} 笔  总盈亏 ¥{m.get('total_pnl', 0):,.2f}")
-        for t in result.trade_flow[-8:]:
-            out.append(f"  {t.entry_date}→{t.exit_date} {t.entry_signal}→{t.exit_signal} "
-                       f"{t.pnl:+,.0f} ({t.pnl_pct:+.1f}%)")
-
-        self.query_one("#bt-output", Static).update("\n".join(out))
+        self._render_result(result, label)
         self.query_one("#bt-status", Static).update("完成")
+
+    def _render_result(self, result, label: str) -> None:
+        """渲染权益曲线 + 绩效 + 流水。"""
+        m = result.metrics
+
+        self.query_one("#bt-summary", Static).update(
+            f"{label} | 初始 ¥{result.initial_capital:,.0f} → "
+            f"期末 ¥{result.final_capital:,.0f}"
+        )
+
+        # 权益曲线可视化（Sparkline）
+        spark = self.query_one("#bt-chart", Sparkline)
+        spark.data = list(result.equity_curve)
+        spark.refresh()
+
+        stats = (
+            f"总收益 {m.get('total_return', 0):+.2f}%  "
+            f"年化 {m.get('annual_return', 0):+.2f}%  "
+            f"胜率 {m.get('win_rate', 0):.1f}%  "
+            f"盈亏比 {m.get('profit_loss_ratio', 0):.2f}\n"
+            f"最大回撤 -{m.get('max_drawdown', 0):.2f}%  "
+            f"夏普 {m.get('sharpe', 0):.2f}  "
+            f"交易 {m.get('trade_count', 0)} 笔  "
+            f"总盈亏 ¥{m.get('total_pnl', 0):,.2f}"
+        )
+        self.query_one("#bt-stats", Static).update(stats)
+
+        table = self.query_one("#bt-flow", DataTable)
+        table.clear()
+        table.add_columns("买入", "卖出", "信号", "盈亏", "盈亏%")
+        for t in result.trade_flow[-20:]:
+            table.add_row(
+                t.entry_date, t.exit_date,
+                f"{t.entry_signal}→{t.exit_signal}",
+                f"{t.pnl:+,.0f}", f"{t.pnl_pct:+.1f}%",
+            )
 
 
 class DashboardApp(App):
@@ -412,7 +443,9 @@ class DashboardApp(App):
     Button { width: 12; }
     Select { width: 20; }
     DataTable { height: 1fr; }
-    #status-content, #pos-output, #bt-output { padding: 1; }
+    #status-content, #pos-output, #bt-summary, #bt-stats { padding: 1; }
+    #bt-chart { height: 5; margin: 1; }
+    #bt-flow { height: 10; }
     """
 
     BINDINGS = [

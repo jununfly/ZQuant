@@ -11,7 +11,7 @@ sys.path.insert(0, "src")
 
 async def _verify():
     import textual
-    from textual.widgets import Input, Static, TabPane
+    from textual.widgets import Input, Sparkline, Static, TabPane
 
     from zquant.config import load_config
     from zquant.tui.dashboard import BacktestPanel, DashboardApp, PositionPanel
@@ -47,9 +47,11 @@ async def _verify():
         app.query_one("#bt-code", Input).value = "600000"
         app.query_one("#bt-capital", Input).value = "100000"
         app.query_one(BacktestPanel)._run()
-        bt_out = str(app.query_one("#bt-output", Static).render())
-        assert "总收益" in bt_out
-        print(f"[5] 回测页: {bt_out.splitlines()[0]}")
+        bt_summary = str(app.query_one("#bt-summary", Static).render())
+        assert "单票" in bt_summary
+        spark = app.query_one("#bt-chart", Sparkline)
+        assert spark.data and len(spark.data) > 0
+        print(f"[5] 回测页: {bt_summary.splitlines()[0]} (权益曲线 {len(spark.data)} 点)")
 
     # 6. CLI 命令注册（无需挂载）
     from zquant.cli.main import app as cli_app

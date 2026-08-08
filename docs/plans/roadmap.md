@@ -1,9 +1,9 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-08-08 22:41:48
+> 数据文件: `roadmap.json` | 最后更新: 2026-08-08 22:47:44
 
-[~][X+] 1. ZQuant
+[x][X+] 1. ZQuant
 ├── [x][Y+] 1-7. M1: 活筹指数数据链打通
 │   ├── [x][Y+] 1-7-7. TDX .day 解析器验证
 │   ├── [x][Y+] 1-7-8. SQLite 建表+CRUD
@@ -26,24 +26,9 @@
 ├── [x][X+] 1-10. M4: 仓位量化框架
 ├── [x][X+] 1-11. M5: 回测引擎
 ├── [x][X+] 1-12. M6: TUI完整面板
-└── [ ][X+] 1-13. M7: 多端界面（Flet）
+└── [x][X+] 1-13. M7: 多端界面（Flet）
     ├── [x][X+] 1-13-1. P0: 薄FastAPI API层
     ├── [x][X+] 1-13-2. P1: Flet骨架(四页导航)
     ├── [x][X+] 1-13-3. P2: 可视化落地(flet-charts)
-    └── [ ][X+] 1-13-4. P3: 多端打包+agent验证
-
-### 当前施工：1. ZQuant
-
-**当前子树：**
-├── [x][Y+] 1-7. M1: 活筹指数数据链打通
-│   ... 6 more child nodes; run tree 1-7 --depth 2 for full view
-├── [x][X+] 1-8. M2: B系列买点信号
-│   ... 6 more child nodes; run tree 1-8 --depth 2 for full view
-├── [x][X+] 1-9. M3: S系列卖点+滴滴风控
-│   ... 4 more child nodes; run tree 1-9 --depth 2 for full view
-├── [x][X+] 1-10. M4: 仓位量化框架
-├── [x][X+] 1-11. M5: 回测引擎
-├── [x][X+] 1-12. M6: TUI完整面板
-└── [ ][X+] 1-13. M7: 多端界面（Flet）
-    ... 4 more child nodes; run tree 1-13 --depth 2 for full view
+    └── [x][X+] 1-13-4. P3: 多端打包+agent验证
 <!-- ROADMAP_SECTION_END -->

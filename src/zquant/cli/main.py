@@ -119,10 +119,12 @@ def scan(
     days: int = typer.Option(1, "--days", "-d", help="扫描最近 N 天的信号"),
     save: bool = typer.Option(True, "--save/--no-save", help="是否将信号存入数据库"),
 ):
-    """扫描 B 系列买点信号。"""
+    """扫描 B/S 系列信号 + 滴滴风控。"""
     from zquant.config import load_config
     from zquant.data.tdx_parser import TdxProvider
     from zquant.signals.b_signals import detect_b_signals
+    from zquant.signals.s_signals import detect_s_signals
+    from zquant.signals.didi import detect_didi
     from zquant.storage.db import init_db, insert_daily_signal
 
     project_root = _resolve_project_root()
@@ -145,7 +147,11 @@ def scan(
             typer.echo(f"✗ 未找到 {code} 的数据")
             raise typer.Exit(1)
 
-        signals = detect_b_signals(df, code, config.signals, config.kdj)
+        b_signals = detect_b_signals(df, code, config.signals, config.kdj)
+        s_signals = detect_s_signals(df, code, config.signals, config.kdj)
+        dd_signals = detect_didi(df, b_signals, code, config.signals)
+        signals = b_signals + s_signals + dd_signals
+        signals.sort(key=lambda s: (s.date, s.signal_type.value))
 
         # 按日期过滤
         cutoff = end_date - timedelta(days=days)
@@ -162,7 +168,10 @@ def scan(
                 for k, v in s.details.items():
                     typer.echo(f"         {k}: {v}")
 
-        typer.echo(f"\n共 {len(recent)} 个信号 (历史总计 {len(signals)} 个)")
+        typer.echo(
+            f"\n共 {len(recent)} 个信号 "
+            f"(B={len(b_signals)} S={len(s_signals)} DD={len(dd_signals)} 历史总计)"
+        )
 
         if save and recent:
             conn = init_db(data_dir)
@@ -197,8 +206,11 @@ def scan(
             if len(df) < 30:
                 continue
 
-            signals = detect_b_signals(df, stock_code, config.signals, config.kdj)
-            recent = [s for s in signals if _parse_date(s.date) >= cutoff]
+            b_sigs = detect_b_signals(df, stock_code, config.signals, config.kdj)
+            s_sigs = detect_s_signals(df, stock_code, config.signals, config.kdj)
+            dd_sigs = detect_didi(df, b_sigs, stock_code, config.signals)
+            all_sigs = b_sigs + s_sigs + dd_sigs
+            recent = [s for s in all_sigs if _parse_date(s.date) >= cutoff]
 
             if recent:
                 for s in recent:

@@ -32,6 +32,12 @@ class SignalConfig:
     didi_min_gain_pct: float = 2.0
     break_days: int = 3
     divergence_period: int = 20
+    s1_divergence_bars: int = 5
+    s1_stall_gain_pct: float = 1.0
+    s1_min_vol_ratio: float = 1.0
+    s1_surge_pct: float = 3.0
+    s2_peak_tolerance: float = 0.03
+    s2_trough_drop_pct: float = 0.05
 
 
 @dataclass
@@ -112,6 +118,12 @@ def load_config(config_path: str | Path = "config/default.toml") -> AppConfig:
             didi_min_gain_pct=_get("signals.didi.min_gain_pct", 2.0),
             break_days=_get("signals.s2.break_days", 3),
             divergence_period=_get("signals.s3.divergence_period", 20),
+            s1_divergence_bars=_get("signals.s1.divergence_bars", 5),
+            s1_stall_gain_pct=_get("signals.s1.stall_gain_pct", 1.0),
+            s1_min_vol_ratio=_get("signals.s1.min_vol_ratio", 1.0),
+            s1_surge_pct=_get("signals.s1.surge_pct", 3.0),
+            s2_peak_tolerance=_get("signals.s2.peak_tolerance", 0.03),
+            s2_trough_drop_pct=_get("signals.s2.trough_drop_pct", 0.05),
         ),
         position=PositionConfig(
             main_line_max=_get("position.main_line_max", 0.70),

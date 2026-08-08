@@ -35,12 +35,16 @@ volume_shrink_ratio = 0.5  # 量能萎缩至前10日均量的 N 倍以下
 [signals.s1]
 # S1 冲顶预警
 j_overbought = 100         # KDJ J值超买阈值
-divergence_bars = 5        # 钝化检查：连续N根K线
+divergence_bars = 5        # 钝化检查：连续N根K线J>=超买阈值
+stall_gain_pct = 1.0       # 滞涨涨幅阈值：当日涨幅<N%视为滞涨
+surge_pct = 3.0            # 短期快速拉升：钝化期间至少一日涨幅>=N%
 
 [signals.s2]
 # S2 破位预警
 ma_mid = 20                # 破位参考均线
 break_days = 3             # 连续跌破N日确认有效破位
+peak_tolerance = 0.03      # M头双顶：两峰差值容忍度(3%)
+trough_drop_pct = 0.05     # M头双顶：中间谷底回落幅度(5%)
 
 [signals.s3]
 # S3 趋势终结

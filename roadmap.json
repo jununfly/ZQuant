@@ -112,8 +112,34 @@
       "status": "pending",
       "mode": "explore",
       "parent": "1",
-      "children": [],
-      "decisions": [],
+      "children": [
+        "1-9-1",
+        "1-9-2",
+        "1-9-3",
+        "1-9-4"
+      ],
+      "decisions": [
+        {
+          "q": "滴滴实现方式?",
+          "answer": "T+1日收盘近似 B信号次日收盘涨幅<2%或跌破买入价(前日收盘)",
+          "note": "日线无分钟线 实盘需人工盘口确认"
+        },
+        {
+          "q": "S2 M头双顶方案?",
+          "answer": "scipy.signal.find_peaks极值法 峰高相似度>=97% 跌破颈线确认",
+          "note": "来自GitHub最佳实践"
+        },
+        {
+          "q": "S1 量化定义?",
+          "answer": "J>=j_overbought连续>=divergence_bars日(钝化) + 当日量比>1但涨幅<1%(放量滞涨)",
+          "note": "j_overbought=100 divergence_bars=5"
+        },
+        {
+          "q": "S3 量化定义?",
+          "answer": "顶背离(divergence_period内价格新高但J未新高) + 均线拐头(MA5下穿MA20或MA20连续下降)",
+          "note": "divergence_period=20"
+        }
+      ],
       "notes": ""
     },
     "1-10": {
@@ -293,11 +319,51 @@
       "children": [],
       "decisions": [],
       "notes": "全市场5223只扫描0错误 单只详细+信号存储验证通过"
+    },
+    "1-9-1": {
+      "id": "1-9-1",
+      "label": "S1/S2/S3 卖点信号检测",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-9-2": {
+      "id": "1-9-2",
+      "label": "滴滴风控信号",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-9-3": {
+      "id": "1-9-3",
+      "label": "scan CLI 集成S信号",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-9-4": {
+      "id": "1-9-4",
+      "label": "M3 端到端验证",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": ""
     }
   },
   "metadata": {
     "created": "2026-08-08 18:44:43",
-    "updated": "2026-08-08 19:07:25",
+    "updated": "2026-08-08 19:24:22",
     "md_file": "README.md"
   }
 }

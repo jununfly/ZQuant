@@ -522,12 +522,12 @@
     "1-13-5": {
       "id": "1-13-5",
       "label": "Reflex 依赖接入+骨架初始化",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-13",
       "children": [],
       "decisions": [],
-      "notes": ""
+      "notes": "reflex 0.9.8 安装 + zquant_web/ 骨架 + core import 验证通过(SIGNAL_NAMES 渲染: B1/B2/B3a/B3b/S1/S2/S3/DD); port 3000 前端 OK; 后端worker 因沙箱 .web/nocompile 删除受限不影响功能"
     },
     "1-13-6": {
       "id": "1-13-6",
@@ -562,7 +562,7 @@
   },
   "metadata": {
     "created": "2026-08-08 18:44:43",
-    "updated": "2026-08-09 19:43:11",
+    "updated": "2026-08-09 19:54:46",
     "md_file": "D:\\workspace\\github\\jununfly\\ZQuant\\docs\\plans\\roadmap.md"
   }
 }

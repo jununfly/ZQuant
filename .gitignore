@@ -30,3 +30,7 @@ Thumbs.db
 
 # WorkBuddy
 .workbuddy/
+
+# Reflex (M7 web 前端)
+.web/
+reflex.lock/

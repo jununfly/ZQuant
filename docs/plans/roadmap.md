@@ -1,9 +1,9 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-08-10 23:14:49
+> 数据文件: `roadmap.json` | 最后更新: 2026-08-10 23:54:49
 
-[~][X+] 1. ZQuant
+[x][X+] 1. ZQuant
 ├── [x][Y+] 1-7. M1: 活筹指数数据链打通
 │   ├── [x][Y+] 1-7-7. TDX .day 解析器验证
 │   ├── [x][Y+] 1-7-8. SQLite 建表+CRUD
@@ -36,9 +36,9 @@
     ├── [x][X+] 1-13-7. 图表落地(Reflex组件)
     └── [x][X+] 1-13-8. agent-browser 验证+响应式适配
 
-### 当前施工：1-13. M7: 多端界面(Reflex)
+### 里程碑总览（全部完成）
 
-M7 全部子任务完成：Reflex 0.9.8 全栈接管，四页(概览/扫描/仓位/回测)落地，recharts 图表 + agent-browser 验证 + 390×844 手机响应式适配通过。
+ZQuant 全部 7 个里程碑（M1 活筹数据链 → M7 多端界面 Reflex）已交付：Reflex 0.9.8 全栈接管，四页(概览/扫描/仓位/回测)落地，recharts 图表 + agent-browser 验证 + 390×844 手机响应式适配通过。
 
 **决策：**
 - Q: M7 技术方案(Flet web)状态? → 已弃用 (Flet 0.86.5 web 渲染有不可修复 bug(scene-host/canvas=0, 官方示例也灰色); 0.85.3 与 flet-charts 不兼容)

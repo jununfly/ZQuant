@@ -34,3 +34,5 @@ Thumbs.db
 # Reflex (M7 web 前端)
 .web/
 reflex.lock/
+.states/
+reflex_*.png

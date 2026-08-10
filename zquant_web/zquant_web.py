@@ -231,6 +231,9 @@ class State(rx.State):
                     "current": f"{lp.current_amount:,.0f}",
                     "delta": f"{lp.delta:+,.0f}",
                     "delta_positive": lp.delta >= 0,
+                    # 数值字段供 recharts 使用
+                    "target_n": lp.target_amount,
+                    "current_n": lp.current_amount,
                 }
                 for lp in plan.layers
             ]
@@ -318,7 +321,8 @@ def stat_card(label: str, value: rx.Var | str, color: rx.Var | str = "") -> rx.C
         padding="4",
         border_radius="8",
         background="#f8f9fb",
-        width="100%",
+        flex="1",
+        min_width="130px",
     )
 
 
@@ -333,6 +337,7 @@ def overview_page() -> rx.Component:
             stat_card("盘态", State.ov_regime),
             width="100%",
             spacing="3",
+            flex_wrap="wrap",
         ),
         rx.card(
             rx.heading("活筹历史曲线", size="4"),
@@ -344,9 +349,12 @@ def overview_page() -> rx.Component:
                     dot=False,
                     type_="monotone",
                 ),
+                rx.recharts.x_axis(data_key="date", hide=True),
+                rx.recharts.y_axis(domain=["auto", "auto"]),
+                rx.recharts.graphing_tooltip(),
                 data=State.ov_series,
                 width="100%",
-                height=200,
+                height=220,
             ),
         ),
         rx.card(
@@ -478,6 +486,7 @@ def position_page() -> rx.Component:
                     stat_card("操作建议", State.pos_action),
                     width="100%",
                     spacing="3",
+                    flex_wrap="wrap",
                 ),
             ),
         ),
@@ -487,12 +496,21 @@ def position_page() -> rx.Component:
                 rx.heading("三层分配", size="4"),
                 rx.recharts.bar_chart(
                     rx.recharts.bar(
-                        data_key="target",
-                        fill="#7e57c2",
+                        data_key="current_n",
+                        fill="#90caf9",
+                        name="当前",
                     ),
+                    rx.recharts.bar(
+                        data_key="target_n",
+                        fill="#1a73e8",
+                        name="目标",
+                    ),
+                    rx.recharts.x_axis(data_key="name"),
+                    rx.recharts.y_axis(),
+                    rx.recharts.graphing_tooltip(),
                     data=State.pos_layers,
                     width="100%",
-                    height=200,
+                    height=220,
                 ),
                 rx.foreach(
                     State.pos_layers,
@@ -564,9 +582,12 @@ def backtest_page() -> rx.Component:
                             fill_opacity=0.3,
                             type_="monotone",
                         ),
+                        rx.recharts.x_axis(hide=True),
+                        rx.recharts.y_axis(domain=["auto", "auto"]),
+                        rx.recharts.graphing_tooltip(),
                         data=State.bt_equity,
                         width="100%",
-                        height=200,
+                        height=220,
                     ),
                 ),
                 rx.card(

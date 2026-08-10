@@ -427,7 +427,7 @@
     "1-13": {
       "id": "1-13",
       "label": "M7: 多端界面(Reflex)",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -477,7 +477,7 @@
           "note": "2026-08-04发布唯一正式版; Python3.13兼容; 避开0.8.x Open Redirect漏洞(CVE范围<=0.8.14)"
         }
       ],
-      "notes": "目标不变(PC/Web/手机一套代码); 技术方案从Flet调整; 纯HTML+JS单页已验证可行(web/index.html)"
+      "notes": "M7 全部子任务完成：Reflex 0.9.8 全栈接管，四页(概览/扫描/仓位/回测)落地，recharts 图表+agent-browser 验证+手机响应式适配通过"
     },
     "1-13-1": {
       "id": "1-13-1",
@@ -542,27 +542,44 @@
     "1-13-7": {
       "id": "1-13-7",
       "label": "图表落地(Reflex组件)",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-13",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "图表库?",
+          "answer": "recharts (Reflex 0.9.8 内置 rx.recharts)",
+          "note": "line_chart/bar_chart/area_chart + x_axis/y_axis/graphing_tooltip"
+        },
+        {
+          "q": "Y轴显示优化?",
+          "answer": "domain=['auto','auto']",
+          "note": "活筹值/权益曲线波动小，默认从0起会被压成直线；自适应Y轴让趋势可见"
+        }
+      ],
+      "notes": "概览折线图、仓位双柱图(当前/目标)、回测权益面积图全部落地；带tooltip与坐标轴"
     },
     "1-13-8": {
       "id": "1-13-8",
       "label": "agent-browser 验证+响应式适配",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-13",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "响应式策略?",
+          "answer": "stat_card 用 flex=1 + min_width=130px; 卡片行 flex_wrap='wrap'",
+          "note": "桌面4列并排，手机390宽自动2列换行；表格/图表 width=100% 自适应"
+        }
+      ],
+      "notes": "agent-browser 验证四页(概览/扫描/仓位/回测)渲染正常；桌面+390x844手机截图通过"
     }
   },
   "metadata": {
     "created": "2026-08-08 18:44:43",
-    "updated": "2026-08-09 20:30:42",
+    "updated": "2026-08-10 23:14:49",
     "md_file": "D:\\workspace\\github\\jununfly\\ZQuant\\docs\\plans\\roadmap.md"
   }
 }

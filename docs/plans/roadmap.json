@@ -16,7 +16,8 @@
         "1-10",
         "1-11",
         "1-12",
-        "1-13"
+        "1-13",
+        "1-14"
       ],
       "decisions": [],
       "notes": ""
@@ -575,11 +576,82 @@
         }
       ],
       "notes": "agent-browser 验证四页(概览/扫描/仓位/回测)渲染正常；桌面+390x844手机截图通过"
+    },
+    "1-14": {
+      "id": "1-14",
+      "label": "M8: 持仓顾问(advisor)",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-14-1",
+        "1-14-2",
+        "1-14-3",
+        "1-14-4"
+      ],
+      "decisions": [
+        {
+          "q": "实现取向?",
+          "answer": "纯程序化(core算结构化诊断+执行单, Reflex直接展示); 不用LLM",
+          "note": "用户选择 a 原型先行"
+        },
+        {
+          "q": "信号灯维度?",
+          "answer": "多维5维(活筹/量能/指数/主线强度/情绪); 原型先活筹单维",
+          "note": "待补量能/指数等数据源"
+        },
+        {
+          "q": "数据范围?",
+          "answer": "含港股+ETF; 接Tushare覆盖H09988/H00700/510300",
+          "note": "需用户提供Tushare token"
+        }
+      ],
+      "notes": "原型(1-14-1)完成: advisor/engine.py + demo 跑通A股真实S/DD信号+活筹单维, 输出ZJ-Advisor式六部分诊断+执行单"
+    },
+    "1-14-1": {
+      "id": "1-14-1",
+      "label": "a原型: 核心链路(活筹单维+A股S/DD)",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-14",
+      "children": [],
+      "decisions": [],
+      "notes": "advisor/engine.py diagnose+render_report + scripts/demo_advisor.py; 用7只示例持仓跑通; 总仓54.81%→目标20.74%(红线30%)"
+    },
+    "1-14-2": {
+      "id": "1-14-2",
+      "label": "港股/ETF数据源(Tushare)",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-14",
+      "children": [],
+      "decisions": [],
+      "notes": "接Tushare覆盖H09988/H00700/510300; 需token"
+    },
+    "1-14-3": {
+      "id": "1-14-3",
+      "label": "多维信号灯(量能/指数/主线/情绪)",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-14",
+      "children": [],
+      "decisions": [],
+      "notes": "5维综合评级; 补TDX量能/指数/涨跌家数"
+    },
+    "1-14-4": {
+      "id": "1-14-4",
+      "label": "CLI zquant advise + Reflex第五页",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-14",
+      "children": [],
+      "decisions": [],
+      "notes": "集成到CLI与Web UI"
     }
   },
   "metadata": {
     "created": "2026-08-08 18:44:43",
-    "updated": "2026-08-10 23:54:49",
+    "updated": "2026-08-19 01:30:00",
     "md_file": "D:\\workspace\\github\\jununfly\\ZQuant\\docs\\plans\\roadmap.md"
   }
 }

@@ -43,6 +43,11 @@ class HoldingsItem:
     """
 
     code: str
+    name: str = ""                      # 股票名称（展示用）
+    cost_price: float = 0.0            # 成本价
+    current_price: float = 0.0         # 当前价
+    layer: PositionLayer | None = None  # 层级归属（主线/支线/答应）
+    verified: bool = False             # 当前价是否已实时源验证（否=示例价待补）
     current_amount: float = 0.0   # 当前市值
 
 
